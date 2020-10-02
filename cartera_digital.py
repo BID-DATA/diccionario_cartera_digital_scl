@@ -7,18 +7,17 @@ Revision code cartera digital 1
 import sys
 sys.stdout.encoding
 'UTF-8'
-
+import nltk
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
 import unicodedata
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
+
 from itertools import chain
 from datetime import datetime, date, time, timedelta
 import re, string
-
-
 
 from textblob import TextBlob
 
@@ -30,10 +29,10 @@ import time
 ############## Lectura del archivo portafolio #############################
 
 
-path = 'C:\Users\alop\Desktop\GitRepositories\calculo_cartera_digital_scl'
+path = "C:/Users/alop/OneDrive - Inter-American Development Bank Group/Desktop/GitRepositories/calculo_cartera_digital_scl"
 #
 #Metadatos=pd.ExcelFile('06.18.19 - Portfolio Ejercicio 1 - 010109 061319.xlsx')
-Metadatos=pd.ExcelFile(path+'Data/Raw_data_usar_26072019.xlsx')
+Metadatos=pd.ExcelFile(path+'/input/00_base_convergencia.xlsx')
 #Metadatos =Metadatos.parse('Raw data')
 Metadatos =Metadatos.parse('Sheet1')
 Metadatos.head()####ver los primeros registros de la data
@@ -46,7 +45,7 @@ Metadatos.shape #####dimensiones de la data
 ############## Lectura del archivo diccionario #############################
 
 ####Se forma un solo diccionario
-Diccionario=pd.ExcelFile(path+'AREAS TRANSVERSALES/Digital/Insumos/Script/01_Diccionario_token_digital.xlsx')
+Diccionario=pd.ExcelFile(path+'/input/01_Diccionario_token_digital.xlsx')
 Diccionario =Diccionario.parse('Sheet1')############Lectura de data
 Diccionario.head()####ver los primeros registros de la data
 Diccionario.columns.values ###Los nombres de las columnas
@@ -76,9 +75,10 @@ Diccionario_Fr['IDIOMA']='fr'
 
 Diccionario_Total = pd.concat([Diccionario_Es,Diccionario_En,Diccionario_Pt,Diccionario_Fr])
 Diccionario_Total2 = Diccionario_Total[['TIPO','PALABRAS','TOKENS']].drop_duplicates()
+
 #######Lectura de diccionario para los textos que se encuentran en sin definir #########
 
-diccionario_bigrama = pd.read_excel(path+'AREAS TRANSVERSALES/Digital/Insumos/Script/02_Diccionario_bigrama_digital.xlsx',sheet_name='Hoja1')
+diccionario_bigrama = pd.read_excel(path+'/input/02_Diccionario_bigrama_digital.xlsx',sheet_name='Hoja1')
 diccionario_bigrama_En=diccionario_bigrama[['TIPO','INGLES']]
 diccionario_bigrama_En.dropna(inplace=True)
 diccionario_bigrama_En.rename(columns = {'INGLES':'PALABRAS'},inplace=True)
@@ -104,33 +104,35 @@ diccionario_bigrama_Fr['IDIOMA']='fr'
 diccionario_bigrama = pd.concat([diccionario_bigrama_Es,diccionario_bigrama_En,diccionario_bigrama_Pt,diccionario_bigrama_Fr])
 ############Eliminacion de registros dobles cuyas fechas current expiration date tenga null #####################
 Metadatos.columns=[w.upper() for w in Metadatos.columns]
-p=datetime.strptime('1900-1-1','%Y-%m-%d')
-Metadatos[['CURRENT_EXPIRATION_DATE']]=Metadatos[['CURRENT_EXPIRATION_DATE']].fillna(p)
-w=Metadatos[['CURRENT_EXPIRATION_DATE']].groupby(Metadatos['OPERATION_NUMBER']).max()
-w.reset_index(inplace=True)
-w=w.rename(columns = {'CURRENT_EXPIRATION_DATE':'CURRENT_EXPIRATION__DATE'})
-Metadatos = Metadatos.merge(w)
-Metadatos = Metadatos[Metadatos['CURRENT_EXPIRATION_DATE']==Metadatos['CURRENT_EXPIRATION__DATE']]
-Metadatos.drop(['CURRENT_EXPIRATION__DATE'],axis=1,inplace=True)
+
+
+#p=datetime.strptime('1900-1-1','%Y-%m-%d')
+#Metadatos[['CURRENT_EXPIRATION_DATE']]=Metadatos[['CURRENT_EXPIRATION_DATE']].fillna(p)
+#w=Metadatos[['CURRENT_EXPIRATION_DATE']].groupby(Metadatos['OPERATION_NUMBER']).max()
+#w.reset_index(inplace=True)
+#w=w.rename(columns = {'CURRENT_EXPIRATION_DATE':'CURRENT_EXPIRATION__DATE'})
+#Metadatos = Metadatos.merge(w)
+#Metadatos = Metadatos[Metadatos['CURRENT_EXPIRATION_DATE']==Metadatos['CURRENT_EXPIRATION__DATE']]
+#Metadatos.drop(['CURRENT_EXPIRATION__DATE'],axis=1,inplace=True)
 
 
 ######################Subase donde se encuentra las columnas las cuales seran procesadas #############
 
 Base = Metadatos[{'OPERATION_NUMBER','OPERATION_NAME',
-                  'OBJECTIVE_ES','OBJECTIVE_EN','COMPONENT_NAME','OUTPUT_NAME','OUTPUT_DESCRIPTION'}]
+                  'OBJECTIVE_ES','OBJECTIVE_EN','COMPONENT_NAME','OUTPUT_NAME','OUTPUTDESCRIPTION'}]
 
 
 
 #########################Generacion de stopwords ##############################################
-
+nltk.download('stopwords')
 listStopwordsEn=stopwords.words('english')
 listStopwordsEs=stopwords.words('spanish')
 listStopwordsFr=stopwords.words('french')
 listStopwordsPt=stopwords.words('portuguese')
 listStopwords= listStopwordsEn + listStopwordsEs + listStopwordsFr + listStopwordsPt +['It']
 
-
-
+listStopwords_df = pd.DataFrame(listStopwords)
+listStopwords_df
 ######################           FUNCIONES                ###################################
 
 def todate(text):
@@ -220,7 +222,7 @@ def limpieza_texto2(text,diccionario):
     text=' ' + text.lower()
     text = text.replace('en linea con',' ')
     text=re.sub('[%s]' % re.escape(string.punctuation), ' ', text)
-   diccionario=diccionario[diccionario['TOKENS']==2]
+    diccionario=diccionario[diccionario['TOKENS']==2]
 #    b =(text.find(' banda ancha ')>=0) | (text.find(' e government ')>=0) | (text.find(' big data ')>=0) | (text.find(' data mining ')>=0) | (text.find(' on line ')>=0)  | (text.find(' data warehouse ')>=0) | (text.find(' en linea ')>=0) 
     a=[]
     text1=' '+text+' '
@@ -476,14 +478,14 @@ def globalfuncion(Base,Diccionario,Variable_Analizar,listStopWords):
     Idioma='PALABRAS'
       
     if(Variable_Analizar=='OUTPUT_NAME'):
-        Base_Aux = Base[{'OPERATION_NUMBER','COMPONENT_NAME',Variable_Analizar,'OUTPUT_DESCRIPTION'}]
-        Base_Aux = Base_Aux[(pd.isnull(Base_Aux['OUTPUT_DESCRIPTION'])==False) | (pd.isnull(Base_Aux['COMPONENT_NAME'])==False)]
-        Base_Aux['OUTPUT_NAME'] = Base_Aux['OUTPUT_NAME'].fillna('')
-        Base_Aux['OUTPUT_DESCRIPTION'] = Base_Aux['OUTPUT_DESCRIPTION'].fillna('')
-        a=list([str(i) for i in (Base_Aux['OUTPUT_NAME'])])
-        b=list([str(j) for j in (Base_Aux['OUTPUT_DESCRIPTION'])])
-        c=[]
-        for i in range(len(a)):
+       Base_Aux = Base[{'OPERATION_NUMBER','COMPONENT_NAME',Variable_Analizar,'OUTPUT_DESCRIPTION'}]
+       Base_Aux = Base_Aux[(pd.isnull(Base_Aux['OUTPUT_DESCRIPTION'])==False) | (pd.isnull(Base_Aux['COMPONENT_NAME'])==False)]
+       Base_Aux['OUTPUT_NAME'] = Base_Aux['OUTPUT_NAME'].fillna('')
+       Base_Aux['OUTPUT_DESCRIPTION'] = Base_Aux['OUTPUT_DESCRIPTION'].fillna('')
+       a=list([str(i) for i in (Base_Aux['OUTPUT_NAME'])])
+       b=list([str(j) for j in (Base_Aux['OUTPUT_DESCRIPTION'])])
+       c=[]
+       for i in range(len(a)):
             if (a[i]!='') & (b[i]!=''):
                 c.append(a[i]+str(' ')+b[i])
             elif b[i]=='':
@@ -491,15 +493,15 @@ def globalfuncion(Base,Diccionario,Variable_Analizar,listStopWords):
             else:
                 c.append(b[i])
 
-        Base_Aux['OUTPUT_NAME']=c
-        Base_Aux.drop(['OUTPUT_DESCRIPTION'], axis=1,inplace=True)
+       Base_Aux['OUTPUT_NAME']=c
+       Base_Aux.drop(['OUTPUT_DESCRIPTION'], axis=1,inplace=True)
         
     else:    
-        Base_Aux= DataFrame()
-        Base_Aux=Base[['OPERATION_NUMBER',Variable_Analizar]]
-        Base_Aux.drop_duplicates(inplace=True)
-        Base_Aux.dropna(inplace=True)
-        Base_Aux[Variable_Analizar]=Base_Aux[Variable_Analizar].apply(str)
+       Base_Aux= DataFrame()
+       Base_Aux=Base[['OPERATION_NUMBER',Variable_Analizar]]
+       Base_Aux.drop_duplicates(inplace=True)
+       Base_Aux.dropna(inplace=True)
+       Base_Aux[Variable_Analizar]=Base_Aux[Variable_Analizar].apply(str)
     
     
     list_of_words=Base_Aux[Variable_Analizar].apply(corpusword,args=(Diccionario_Total[Diccionario_Total.TOKENS==1]['PALABRAS'],listStopwords,))
@@ -511,13 +513,15 @@ def globalfuncion(Base,Diccionario,Variable_Analizar,listStopWords):
     
     
     dframe =DataFrame()
+
+   
     
     if(Variable_Analizar=='OUTPUT_NAME'):
-        Base_Aux['COMPONENT_NAME']=Base_Aux['COMPONENT_NAME'].astype(str)
-       rep_component=repeticiones(list_of_words,Base_Aux,'COMPONENT_NAME')
-        dframe['COMPONENT_NAME']=rep_component
+     Base_Aux['COMPONENT_NAME']=Base_Aux['COMPONENT_NAME'].astype(str)
+     rep_component=repeticiones(list_of_words,Base_Aux,'COMPONENT_NAME')
+     dframe['COMPONENT_NAME']=rep_component
     
-    list_of_words=list(chain(*list_of_words))
+     list_of_words=list(chain(*list_of_words))
     
 #    
     
@@ -700,7 +704,7 @@ def SinDefinir2(Base,diccionario2,Variable_Analizar):
     list_of_words=list(chain(*Base_Aux['WORDS']))
     rep_component=repeticiones(Base_Aux['WORDS'],Base_Aux,'OPERATION_NUMBER')
     rep_variable=repeticiones(Base_Aux['WORDS'],Base_Aux,Variable_Analizar)
-   Base_Aux=pd.DataFrame([rep_component,rep_variable,list_of_words],index=['OPERATION_NUMBER',Variable_Analizar,'WORDS']).T
+    Base_Aux=pd.DataFrame([rep_component,rep_variable,list_of_words],index=['OPERATION_NUMBER',Variable_Analizar,'WORDS']).T
     
     return [Base,Base_Aux]
 
@@ -831,7 +835,7 @@ Palabras.rename(columns={'WORDS':'COUNT_WORDS'},inplace=True)
 Palabras.reset_index(inplace=True)
 
 ########EXPORTAR ARCHIVOS#############
-with pd.ExcelWriter(path+"AREAS TRANSVERSALES/Digital/Resultados/Resultados_Digital.xlsx") as writer:
+with pd.ExcelWriter(path+"/output/.xlsx") as writer:
     Titulo.to_excel(writer,sheet_name="Operation_Name",index=False)
     Objetivo.to_excel(writer,sheet_name="Objetivo",index=False)
     Componentes1.to_excel(writer,sheet_name="Component",index=False)
