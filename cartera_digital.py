@@ -10,6 +10,7 @@ sys.stdout.encoding
 import nltk
 import numpy as np
 import pandas as pd
+import hashlib
 from pandas import DataFrame
 import unicodedata
 from nltk.tokenize import RegexpTokenizer
@@ -118,8 +119,8 @@ Metadatos.columns=[w.upper() for w in Metadatos.columns]
 
 ######################Subase donde se encuentra las columnas las cuales seran procesadas #############
 
-Base = Metadatos[{'OPERATION_NUMBER','OPERATION_NAME',
-                  'OBJECTIVE_ES','OBJECTIVE_EN','COMPONENT_NAME','OUTPUT_NAME','OUTPUTDESCRIPTION'}]
+Base = Metadatos[['OPERATION_NUMBER','OPERATION_NAME',
+                  'OBJECTIVE_ES','OBJECTIVE_EN','COMPONENT_NAME','OUTPUT_NAME','OUTPUTDESCRIPTION']]
 
 
 
@@ -478,7 +479,7 @@ def globalfuncion(Base,Diccionario,Variable_Analizar,listStopWords):
     Idioma='PALABRAS'
       
     if(Variable_Analizar=='OUTPUT_NAME'):
-       Base_Aux = Base[{'OPERATION_NUMBER','COMPONENT_NAME',Variable_Analizar,'OUTPUT_DESCRIPTION'}]
+       Base_Aux = Base[['OPERATION_NUMBER','COMPONENT_NAME',Variable_Analizar,'OUTPUT_DESCRIPTION']]
        Base_Aux = Base_Aux[(pd.isnull(Base_Aux['OUTPUT_DESCRIPTION'])==False) | (pd.isnull(Base_Aux['COMPONENT_NAME'])==False)]
        Base_Aux['OUTPUT_NAME'] = Base_Aux['OUTPUT_NAME'].fillna('')
        Base_Aux['OUTPUT_DESCRIPTION'] = Base_Aux['OUTPUT_DESCRIPTION'].fillna('')
@@ -549,7 +550,7 @@ def globalfuncion(Base,Diccionario,Variable_Analizar,listStopWords):
         
     dframe.reset_index(inplace=True)
     X=set(dframe.columns) #####conjunto de las columnas
-    Y=set({'NEGATIVO','NEUTRO','NEUTRO POSITIVO','POSITIVO'}) ###columnas necesarias para aplicar la condicion
+    Y=set(['NEGATIVO','NEUTRO','NEUTRO POSITIVO','POSITIVO']) ###columnas necesarias para aplicar la condicion
     b=list(Y-X)
     
     if len(b)>0:
