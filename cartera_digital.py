@@ -120,7 +120,7 @@ Metadatos.columns=[w.upper() for w in Metadatos.columns]
 ######################Subase donde se encuentra las columnas las cuales seran procesadas #############
 
 Base = Metadatos[['OPERATION_NUMBER','OPERATION_NAME',
-                  'OBJECTIVE_ES','OBJECTIVE_EN','COMPONENT_NAME','OUTPUT_NAME','OUTPUTDESCRIPTION']]
+                  'OBJECTIVE_ES','OBJECTIVE_EN','COMPONENT_NAME','OUTPUT_NAME','OUTPUT_DESCRIPTION']]
 
 
 
