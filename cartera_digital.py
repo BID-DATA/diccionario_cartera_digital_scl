@@ -525,11 +525,12 @@ def globalfuncion(Base,Diccionario,Variable_Analizar,listStopWords):
      list_of_words=list(chain(*list_of_words))
     
 #    
-    
+
     dframe['OPERATION_NUMBER']=rep_name
     dframe[Variable_Analizar]=rep_variable
+    
     dframe['WORDS']=list_of_words
-#    
+    dframe.explode('WORDS')
 
 #    Base_Aux[Variable_Analizar]=Base_Aux[Variable_Analizar].str.replace(' xxxxxx ',' Red ')
     dframe = dframe.merge(Diccionario[['TIPO',Idioma]],left_on='WORDS',right_on=Idioma,how='left')
@@ -698,10 +699,12 @@ def SinDefinir2(Base,diccionario2,Variable_Analizar):
             a.append('')
     Base_Aux['RESULT_'+Variable_Analizar+'_2']=a
     Base_Aux['WORDS']=b
+    Base_Aux.explode('WORDS')
 #    Base_Aux['WORDS']=b
     Base=Base.merge(Base_Aux,how='left')
     Base['RESULT_'+Variable_Analizar]=np.where(pd.isnull(Base['RESULT_'+Variable_Analizar+'_2']),Base['RESULT_'+Variable_Analizar],Base['RESULT_'+Variable_Analizar+'_2'])
     Base.drop(['RESULT_'+Variable_Analizar+'_2','WORDS'], axis=1,inplace=True)
+   
     list_of_words=list(chain(*Base_Aux['WORDS']))
     rep_component=repeticiones(Base_Aux['WORDS'],Base_Aux,'OPERATION_NUMBER')
     rep_variable=repeticiones(Base_Aux['WORDS'],Base_Aux,Variable_Analizar)
@@ -836,7 +839,7 @@ Palabras.rename(columns={'WORDS':'COUNT_WORDS'},inplace=True)
 Palabras.reset_index(inplace=True)
 
 ########EXPORTAR ARCHIVOS#############
-with pd.ExcelWriter(path+"/output/.xlsx") as writer:
+with pd.ExcelWriter(path+"/output/output.xlsx") as writer:
     Titulo.to_excel(writer,sheet_name="Operation_Name",index=False)
     Objetivo.to_excel(writer,sheet_name="Objetivo",index=False)
     Componentes1.to_excel(writer,sheet_name="Component",index=False)
