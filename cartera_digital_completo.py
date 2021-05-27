@@ -58,7 +58,7 @@ import time
 path = 'C:/Users/alop/OneDrive - Inter-American Development Bank Group/Desktop/GitRepositories/calculo_cartera_digital_scl'
 #
 #Metadatos=pd.ExcelFile('06.18.19 - Portfolio Ejercicio 1 - 010109 061319.xlsx')
-Metadatos=pd.ExcelFile(path+'/input/00_base_convergencia.xlsx')
+Metadatos=pd.ExcelFile(path+'/input/00_base_convergencia2019-2020.xlsx')
 #Metadatos =Metadatos.parse('Raw data')
 Metadatos =Metadatos.parse('Sheet1')
 Metadatos.head()####ver los primeros registros de la data
@@ -815,8 +815,9 @@ Final.fillna(0,inplace=True)
 
 
 
-Final['DUMMY_DIGITAL']=np.where((Final['RESULT_OPERATION_NAME']=='DIGITAL') | (Final['RESULT_OBJETIVO']=='DIGITAL'),1,np.where(((Final['RESULT_OPERATION_NAME']=='DIGITAL') | (Final['RESULT_OBJETIVO']=='DIGITAL')) &((Final['DIGITAL_COMP']>0.32) | (Final['DIGITAL_OUT']>0.32)),1,0))
+Final['DUMMY_DIGITAL']=np.where((Final['RESULT_OPERATION_NAME']=='DIGITAL') | (Final['RESULT_OBJETIVO']=='DIGITAL') | (Final['RESULT_OUTPUT_NAME']=='DIGITAL'),1,0))
 Final['DUMMY_INNOVACION']=Final[['RESULT_'+'OPERATION_NAME_'+'TECN-INNOV','RESULT_OBJECTIVE_TECN-INNOV']].apply(np.nanmax,axis=1)
+Final['DUMMY_OBJETIVO_DIG']=np.where((Final['RESULT_OBJETIVO']=='DIGITAL'),1,0)
 Final['DUMMY_INN_DIGITAL']=np.where((Final['DUMMY_DIGITAL']==1) & (Final['DUMMY_INNOVACION']==1),1,0)
 Final=Final[['OPERATION_NUMBER','DUMMY_DIGITAL','DUMMY_INNOVACION','DUMMY_INN_DIGITAL']]
 
