@@ -120,8 +120,9 @@ Diccionario_Fr['IDIOMA']='fr'
 
 Diccionario_Total = pd.concat([Diccionario_Es,Diccionario_En,Diccionario_Pt,Diccionario_Fr])
 Diccionario_Total2 = Diccionario_Total[['TIPO','PALABRAS','TOKENS']].drop_duplicates()
-#######Lectura de diccionario para los textos que se encuentran en sin definir #########
 
+
+#######Lectura de diccionario para los textos que se encuentran en sin definir #########
 diccionario_bigrama = pd.read_excel(path+'/input/02_Diccionario_bigrama_digital.xlsx',sheet_name='Hoja1')
 diccionario_bigrama_En=diccionario_bigrama[['TIPO','INGLES']]
 diccionario_bigrama_En.dropna(inplace=True)
@@ -146,6 +147,8 @@ diccionario_bigrama_Fr.rename(columns = {'FRANCES':'PALABRAS'},inplace=True)
 diccionario_bigrama_Fr['IDIOMA']='fr'
 
 diccionario_bigrama = pd.concat([diccionario_bigrama_Es,diccionario_bigrama_En,diccionario_bigrama_Pt,diccionario_bigrama_Fr])
+
+
 ############Eliminacion de registros dobles cuyas fechas current expiration date tenga null #####################
 Metadatos.columns=[w.upper() for w in Metadatos.columns]
 p=datetime.strptime('1900-1-1','%Y-%m-%d')
@@ -856,6 +859,14 @@ Bas.rename(columns={'APPROVAL_DATE_y':'APPROVAL_DATE'},inplace=True)
 Bas=Bas.merge(Final,how='outer')
 #Bas['APPROVAL_DATE']=Bas['APPROVAL_DATE'].apply(todate)
 
+#Agregando columna con descripción de outputs clasificados como DIGITAL 
+tempdf = Producto1[Producto1.RESULT_OUTPUT_NAME == 'DIGITAL'][['OPERATION_NUMBER', 'OUTPUT_NAME']]
+dig_out_desc = pd.DataFrame()
+dig_out_desc['OPERATION_NUMBER'] = tempdf.OPERATION_NUMBER.drop_duplicates()
+dig_out_desc['OUTPUT_DESCRIPTION'] = tempdf.groupby('OPERATION_NUMBER')['OUTPUT_NAME'].transform(lambda x: '; '.join(x))
+
+Bas = Bas.merge(dig_out_desc, on = 'OPERATION_NUMBER', how = 'left')
+
 
 
 #######################################################################################################
@@ -865,14 +876,16 @@ Palabras=pd.concat([A1,B1,C1,D1,E1],axis=0,ignore_index=True)
 Dicc=pd.concat([Diccionario_Total[['PALABRAS','IDIOMA','TIPO']],diccionario_bigrama[['PALABRAS','IDIOMA','TIPO']]],ignore_index=True)
 Palabras=Palabras.merge(Dicc,right_on='PALABRAS',left_on='WORDS',how='left')
 
-Palabras=Palabras[(Palabras['IDIOMA']=='en')&(Palabras['TIPO']=='POSITIVO')][['OPERATION_NUMBER','WORDS']]
+#Palabras=Palabras[(Palabras['IDIOMA']=='en')&(Palabras['TIPO']=='POSITIVO')][['OPERATION_NUMBER','WORDS']] #Esta versión arroja nube de palabras incompleta 
+Palabras=Palabras[(Palabras['TIPO']=='POSITIVO')|(Palabras['TIPO']=='NEUTRO POSITIVO')][['OPERATION_NUMBER','WORDS']] 
 
 Palabras["WORDS2"]=Palabras["WORDS"].apply(singular)
 Palabras=Palabras[["OPERATION_NUMBER","WORDS2"]]
 Palabras.rename(columns={'WORDS2':'WORDS'},inplace=True)
 
 
-Palabras=DataFrame(Palabras["PALABRAS","WORDS"].groupby([Palabras['OPERATION_NUMBER']],Palabras['WORDS','PALABRAS']).count())
+#Palabras=DataFrame(Palabras["PALABRAS","WORDS"].groupby([Palabras['OPERATION_NUMBER']],Palabras['WORDS','PALABRAS']).count()) #Esta línea no corre, lo puse como está en la versión de EDU_IADB_cartera_digital que si corre
+Palabras=DataFrame(Palabras["WORDS"].groupby([Palabras['OPERATION_NUMBER'],Palabras['WORDS']]).count())
 Palabras.rename(columns={'WORDS':'COUNT_WORDS'},inplace=True)
 Palabras.rename(columns={'PALABRAS':'COUNT_WORDS'},inplace=True)
 Palabras.reset_index(inplace=True)
