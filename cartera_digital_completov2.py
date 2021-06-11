@@ -863,10 +863,9 @@ Bas=Bas.merge(Final,how='outer')
 tempdf = Producto1[Producto1.RESULT_OUTPUT_NAME == 'DIGITAL'][['OPERATION_NUMBER', 'OUTPUT_NAME']]
 dig_out_desc = pd.DataFrame()
 dig_out_desc['OPERATION_NUMBER'] = tempdf.OPERATION_NUMBER.drop_duplicates()
-dig_out_desc['OUTPUT_DESCRIPTION'] = tempdf.groupby('OPERATION_NUMBER')['OUTPUT_NAME'].transform(lambda x: '; '.join(x))
+dig_out_desc['DIG_OUTPUT_DESCRIPTION'] = tempdf.groupby('OPERATION_NUMBER')['OUTPUT_NAME'].transform(lambda x: '; '.join(x))
 
 Bas = Bas.merge(dig_out_desc, on = 'OPERATION_NUMBER', how = 'left')
-
 
 
 #######################################################################################################
@@ -877,15 +876,16 @@ Dicc=pd.concat([Diccionario_Total[['PALABRAS','IDIOMA','TIPO']],diccionario_bigr
 Palabras=Palabras.merge(Dicc,right_on='PALABRAS',left_on='WORDS',how='left')
 
 #Palabras=Palabras[(Palabras['IDIOMA']=='en')&(Palabras['TIPO']=='POSITIVO')][['OPERATION_NUMBER','WORDS']] #Esta versión arroja nube de palabras incompleta 
-Palabras=Palabras[(Palabras['TIPO']=='POSITIVO')|(Palabras['TIPO']=='NEUTRO POSITIVO')][['OPERATION_NUMBER','WORDS']] 
+Palabras=Palabras[(Palabras['TIPO']=='POSITIVO')|(Palabras['TIPO']=='NEUTRO POSITIVO')][['OPERATION_NUMBER','WORDS','TIPO']] 
 
 Palabras["WORDS2"]=Palabras["WORDS"].apply(singular)
-Palabras=Palabras[["OPERATION_NUMBER","WORDS2"]]
+Palabras=Palabras[["OPERATION_NUMBER","WORDS2","TIPO"]]
 Palabras.rename(columns={'WORDS2':'WORDS'},inplace=True)
 
 
 #Palabras=DataFrame(Palabras["PALABRAS","WORDS"].groupby([Palabras['OPERATION_NUMBER']],Palabras['WORDS','PALABRAS']).count()) #Esta línea no corre, lo puse como está en la versión de EDU_IADB_cartera_digital que si corre
-Palabras=DataFrame(Palabras["WORDS"].groupby([Palabras['OPERATION_NUMBER'],Palabras['WORDS']]).count())
+#Palabras=DataFrame(Palabras["WORDS"].groupby([Palabras['OPERATION_NUMBER'],Palabras['WORDS']]).count())
+Palabras = DataFrame(Palabras['WORDS'].groupby([Palabras['OPERATION_NUMBER'],Palabras['WORDS'],Palabras['TIPO']]).count())
 Palabras.rename(columns={'WORDS':'COUNT_WORDS'},inplace=True)
 Palabras.rename(columns={'PALABRAS':'COUNT_WORDS'},inplace=True)
 Palabras.reset_index(inplace=True)
@@ -899,6 +899,4 @@ with pd.ExcelWriter(path+"/output/output.xlsx") as writer:
     Bas.to_excel(writer,sheet_name="Metadata",index=False)
     Palabras.to_excel(writer,sheet_name="palabras",index=False)
     
-    
-
-    
+   
