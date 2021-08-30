@@ -3,6 +3,8 @@
 Created on Mon Oct 19 10:42:59 2020
 
 @author: ALOP
+
+Updated on Thu Jun 10 2021, deyanaram@iadb.org
 """
 
 
@@ -50,45 +52,42 @@ from textblob import TextBlob
 import os
 import time
 
+import ibm_db
 
 
-############## Lectura del archivo portafolio #############################
+##################### Extracción de datos operaciones #########################
 
+con = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=alop;PWD=Colombia31.044064;", "", "") #Abriendo conexión con repositorio de datos DB2 
+
+sql = "SELECT DISTINCT 	C.OPER_NUM as OPERATION_NUMBER,	C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION,\
+	C.REGN AS REGION, C.CNTRY_BENFIT AS COUNTRY, C.STS_CD AS STATUS, C.STG_ENGL_NM AS STAGE, C.STS_ENGL_NM AS TAXONOMY, C.OPER_EXEC_STS AS EXEC_STS, C.APPRVL_DT AS APPROVAL_DATE, 	C.APPRVL_DT_YR as APPROVAL_YEAR,\
+    C.ORIG_APPRVD_USEQ_AMNT AS APPROVAL_AMOUNT, C.CURNT_DISB_EXPR_DT as CURRENT_EXPIRATION_DATE, C.RELTN_NUM AS RELATED_OPER,C.FACILITY_TYP_CD AS RELATION_TYPE, C.OPER_TYP_CD AS OPERATION_TYPE, A.OBJTV_ENGL as OBJECTIVE_EN,\
+    A.OBJTV_SPANISH as OBJECTIVE_ES, B.CMPNT_STMNT as COMPONENT_NAME, B.OUTPUT_DEFNTN as OUTPUT_NAME, C.FACILITY_TYP_ENGL_NM AS OUTPUT_DESCRIPTION \
+FROM ODS.SPD_ODS_HOPERMAS C \
+	JOIN ( select OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ODS.SPD_ODS_HOPERMAS GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT \
+ 	JOIN ODS.OPER_ODS_OPER A ON C.OPER_NUM = A.OPER_NUM \
+ 	JOIN ODS.OPER_ODS_OUTPUT_IND B ON C.OPER_NUM = B.OPER_NUM \
+WHERE C.APPRVL_DT_YR > 2015  AND C.PREP_RESP_DEPT_CD='SCL' " #SQL query de datos deseados
+
+stmt = ibm_db.exec_immediate(con, sql) #Querying data
+
+#Creando base de datos con query
+cols = ['OPERATION_NUMBER', 'OPERATION_NAME', 'OPERATION_TYPE_NAME', 'OPERATION_MODALITY', 'DEPARTMENT', 'DIVISION', 'REGION', 'COUNTRY', 'STATUS', 'STAGE', 'TAXONOMY', 'EXEC_STS', 'APPROVAL_DATE', 'APPROVAL_YEAR', 'APPROVAL_AMOUNT', 'CURRENT_EXPIRATION_DATE', 'RELATED_OPER', 'RELATION_TYPE', 'OPERATION_TYPE', 'OBJECTIVE_EN', 'OBJECTIVE_ES', 'COMPONENT_NAME', 'OUTPUT_NAME', 'OUTPUT_DESCRIPTION']
+Metadatos = pd.DataFrame(columns=cols)
+result = ibm_db.fetch_both(stmt)
+while(result):
+    Metadatos = Metadatos.append(result, ignore_index=True)
+    result = ibm_db.fetch_both(stmt)
+
+Metadatos = Metadatos.iloc[:, 0:24]
+Metadatos.shape #Visualizando resultado 
+    
+ibm_db.close #Cerrando la conexión
+
+
+################# Lectura del archivo diccionario #############################
 
 path = 'C:/Users/alop/OneDrive - Inter-American Development Bank Group/Desktop/GitRepositories/calculo_cartera_digital_scl'
-'''''
-def clean(text):
-    try:
-        text =  text.encode("latin-1").decode("utf-8")
-    except UnicodeEncodeError:
-        try:
-            text = text.encode('cp1252').decode()
-        except:
-            pass            
-    except:
-        pass
-    
-    return text
-data = pd.read_excel("C:/Users/alop/OneDrive - Inter-American Development Bank Group/Desktop/GitRepositories/calculo_cartera_digital_scl/input/00_base_convergencia2016-2021.xlsx",  encoding='utf-8')
-
-for col in ["OBJECTIVE_ES", "COMPONENT_NAME", "OUTPUT_NAME", "OUTPUT_DESCRIPTION"]:
-    data[col] =  data[col].apply(lambda x: clean(x))
-
-data.to_excel(r'C:/Users/alop/OneDrive - Inter-American Development Bank Group/Desktop/GitRepositories/calculo_cartera_digital_scl/input/00_base_convergencia2016-2021.xlsx', index = False, encoding="utf-8-sig")
-'''
-
-#Metadatos=pd.ExcelFile('06.18.19 - Portfolio Ejercicio 1 - 010109 061319.xlsx')
-Metadatos=pd.ExcelFile(path+'/input/00_base_convergencia2016-2021.xlsx')
-#Metadatos =Metadatos.parse('Raw data')
-Metadatos =Metadatos.parse('Sheet1')
-Metadatos.head()####ver los primeros registros de la data
-Metadatos.columns.values ###Los nombres de las columnas
-Metadatos.shape #####dimensiones de la data
-
-
-
-
-############## Lectura del archivo diccionario #############################
 
 ####Se forma un solo diccionario
 Diccionario=pd.ExcelFile(path+'/input/01_Diccionario_token_digital.xlsx')
@@ -121,8 +120,9 @@ Diccionario_Fr['IDIOMA']='fr'
 
 Diccionario_Total = pd.concat([Diccionario_Es,Diccionario_En,Diccionario_Pt,Diccionario_Fr])
 Diccionario_Total2 = Diccionario_Total[['TIPO','PALABRAS','TOKENS']].drop_duplicates()
-#######Lectura de diccionario para los textos que se encuentran en sin definir #########
 
+
+#######Lectura de diccionario para los textos que se encuentran en sin definir #########
 diccionario_bigrama = pd.read_excel(path+'/input/02_Diccionario_bigrama_digital.xlsx',sheet_name='Hoja1')
 diccionario_bigrama_En=diccionario_bigrama[['TIPO','INGLES']]
 diccionario_bigrama_En.dropna(inplace=True)
@@ -147,6 +147,8 @@ diccionario_bigrama_Fr.rename(columns = {'FRANCES':'PALABRAS'},inplace=True)
 diccionario_bigrama_Fr['IDIOMA']='fr'
 
 diccionario_bigrama = pd.concat([diccionario_bigrama_Es,diccionario_bigrama_En,diccionario_bigrama_Pt,diccionario_bigrama_Fr])
+
+
 ############Eliminacion de registros dobles cuyas fechas current expiration date tenga null #####################
 Metadatos.columns=[w.upper() for w in Metadatos.columns]
 p=datetime.strptime('1900-1-1','%Y-%m-%d')
@@ -857,6 +859,13 @@ Bas.rename(columns={'APPROVAL_DATE_y':'APPROVAL_DATE'},inplace=True)
 Bas=Bas.merge(Final,how='outer')
 #Bas['APPROVAL_DATE']=Bas['APPROVAL_DATE'].apply(todate)
 
+#Agregando columna con descripción de outputs clasificados como DIGITAL 
+tempdf = Producto1[Producto1.RESULT_OUTPUT_NAME == 'DIGITAL'][['OPERATION_NUMBER', 'OUTPUT_NAME']]
+dig_out_desc = pd.DataFrame()
+dig_out_desc['OPERATION_NUMBER'] = tempdf.OPERATION_NUMBER.drop_duplicates()
+dig_out_desc['DIG_OUTPUT_DESCRIPTION'] = tempdf.groupby('OPERATION_NUMBER')['OUTPUT_NAME'].transform(lambda x: '; '.join(x))
+
+Bas = Bas.merge(dig_out_desc, on = 'OPERATION_NUMBER', how = 'left')
 
 
 #######################################################################################################
@@ -866,14 +875,17 @@ Palabras=pd.concat([A1,B1,C1,D1,E1],axis=0,ignore_index=True)
 Dicc=pd.concat([Diccionario_Total[['PALABRAS','IDIOMA','TIPO']],diccionario_bigrama[['PALABRAS','IDIOMA','TIPO']]],ignore_index=True)
 Palabras=Palabras.merge(Dicc,right_on='PALABRAS',left_on='WORDS',how='left')
 
-Palabras=Palabras[(Palabras['IDIOMA']=='en')&(Palabras['TIPO']=='POSITIVO')][['OPERATION_NUMBER','WORDS']]
+#Palabras=Palabras[(Palabras['IDIOMA']=='en')&(Palabras['TIPO']=='POSITIVO')][['OPERATION_NUMBER','WORDS']] #Esta versión arroja nube de palabras incompleta 
+Palabras=Palabras[(Palabras['TIPO']=='POSITIVO')|(Palabras['TIPO']=='NEUTRO POSITIVO')][['OPERATION_NUMBER','WORDS','TIPO']] 
 
 Palabras["WORDS2"]=Palabras["WORDS"].apply(singular)
-Palabras=Palabras[["OPERATION_NUMBER","WORDS2"]]
+Palabras=Palabras[["OPERATION_NUMBER","WORDS2","TIPO"]]
 Palabras.rename(columns={'WORDS2':'WORDS'},inplace=True)
 
 
-Palabras=DataFrame(Palabras["PALABRAS","WORDS"].groupby([Palabras['OPERATION_NUMBER']],Palabras['WORDS','PALABRAS']).count())
+#Palabras=DataFrame(Palabras["PALABRAS","WORDS"].groupby([Palabras['OPERATION_NUMBER']],Palabras['WORDS','PALABRAS']).count()) #Esta línea no corre, lo puse como está en la versión de EDU_IADB_cartera_digital que si corre
+#Palabras=DataFrame(Palabras["WORDS"].groupby([Palabras['OPERATION_NUMBER'],Palabras['WORDS']]).count())
+Palabras = DataFrame(Palabras['WORDS'].groupby([Palabras['OPERATION_NUMBER'],Palabras['WORDS'],Palabras['TIPO']]).count())
 Palabras.rename(columns={'WORDS':'COUNT_WORDS'},inplace=True)
 Palabras.rename(columns={'PALABRAS':'COUNT_WORDS'},inplace=True)
 Palabras.reset_index(inplace=True)
@@ -887,6 +899,4 @@ with pd.ExcelWriter(path+"/output/output.xlsx") as writer:
     Bas.to_excel(writer,sheet_name="Metadata",index=False)
     Palabras.to_excel(writer,sheet_name="palabras",index=False)
     
-    
-
-    
+   
