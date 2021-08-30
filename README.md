@@ -2,8 +2,6 @@
 
 El presente código ha sido creado con el fin de realizar un procesamiento de texto y búsqueda de palabras, por medio de los cuales asignaremos una clasificación de acuerdo a un diccionario previamente establecido.
  
-La primera versión de este diccionario ha sido creado por los expertos de BID de CSC, que han determinado palabras claves para clasificar el tipo de ##operacion## al que se refiere el texto, es decir, clasificar en un texto tipo DIGITAL, NO DIGITAL y SIN DEFINIR.
+La primera versión de este diccionario ha sido creado el departamento de CSC del BID y luego actualizado por el front office del sector social. Entre los grupo se han determinado palabras clave para clasificar el tipo de ##operacion## al que se refiere el texto, es decir, clasificar en un texto tipo DIGITAL, NO DIGITAL
  
-La categoría SIN DEFINIR se refiere a que menciona palabras que por si sola aún no se puede clasificar el texto y por lo cual depende del sentido de la frase para poder clasificarlas.
- 
-En este sentido y con la necesidad de clasificar de manera rápida y correcta a estos archivos, se crea un diccionario adicional ya no de palabras, sino de un conjunto de palabras, las cuales explicar si el texto es DIGITAL o no lo es.
+El codigo usa como fuente de datos las operaciones de Convergancia del Banco que son automaticamente extraidas utilizando la libreria ibm_db. Luego es analizado y clasificado el texto de las operaciones y exportado para alimentar el Dashboard de cartera digital del sector social: https://app.powerbi.com/groups/me/reports/a9483e19-bfb1-474b-89e7-f479af7fba65/ReportSection0ab4c65391af2642b8ae
