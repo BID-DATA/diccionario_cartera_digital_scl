@@ -2,7 +2,8 @@
 """
 Created on Mon Aug 30 19:17:06 2021
 
-@author: MARIAREY
+@author: ALOP 
+Modified on Tu Nov 2 13:11:09 2021
 """
 "con este script se llaman las operaciones del pipeline para el triage digital"
 
