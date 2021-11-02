@@ -5,6 +5,7 @@ Created on Mon Oct 19 10:42:59 2020
 @author: ALOP
 
 Updated on Thu Jun 10 2021, deyanaram@iadb.org
+Updated on Mon Nov 01, 2021, mariarey@iadb.org
 """
 
 
@@ -55,9 +56,10 @@ import time
 import ibm_db
 
 
+
 ##################### Extracción de datos operaciones #########################
 
-con = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;UID=alop;PWD=Colombia31.044064;", "", "") #Abriendo conexión con repositorio de datos DB2 
+conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=mariarey;PWD=15121995Andrea$;", "", "") #Abriendo conexión con repositorio de datos DB2 
 
 sql = "SELECT DISTINCT 	C.OPER_NUM as OPERATION_NUMBER,	C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION,\
 	C.REGN AS REGION, C.CNTRY_BENFIT AS COUNTRY, C.STS_CD AS STATUS, C.STG_ENGL_NM AS STAGE, C.STS_ENGL_NM AS TAXONOMY, C.OPER_EXEC_STS AS EXEC_STS, C.APPRVL_DT AS APPROVAL_DATE, 	C.APPRVL_DT_YR as APPROVAL_YEAR,\
@@ -67,9 +69,9 @@ FROM ODS.SPD_ODS_HOPERMAS C \
 	JOIN ( select OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ODS.SPD_ODS_HOPERMAS GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT \
  	JOIN ODS.OPER_ODS_OPER A ON C.OPER_NUM = A.OPER_NUM \
  	JOIN ODS.OPER_ODS_OUTPUT_IND B ON C.OPER_NUM = B.OPER_NUM \
-WHERE C.APPRVL_DT_YR > 2015  AND C.PREP_RESP_DEPT_CD='SCL' AND C.STS_CD='ACTIVE'" #SQL query de datos deseados
+WHERE C.APPRVL_DT_YR > 2015  AND C.PREP_RESP_DEPT_CD='SCL' AND C.STS_CD='ACTIVE' AND DATE(C.APPRVL_DT)<DATE(NOW()) " #SQL query de datos deseados, MRT: se agrega filtro de fecha de aprobación menor al día de hoy
 
-stmt = ibm_db.exec_immediate(con, sql) #Querying data
+stmt = ibm_db.exec_immediate(conn, sql) #Querying data
 
 #Creando base de datos con query
 cols = ['OPERATION_NUMBER', 'OPERATION_NAME', 'OPERATION_TYPE_NAME', 'OPERATION_MODALITY', 'DEPARTMENT', 'DIVISION', 'REGION', 'COUNTRY', 'STATUS', 'STAGE', 'TAXONOMY', 'EXEC_STS', 'APPROVAL_DATE', 'APPROVAL_YEAR', 'APPROVAL_AMOUNT', 'CURRENT_EXPIRATION_DATE', 'RELATED_OPER', 'RELATION_TYPE', 'OPERATION_TYPE', 'OBJECTIVE_EN', 'OBJECTIVE_ES', 'COMPONENT_NAME', 'OUTPUT_NAME', 'OUTPUT_DESCRIPTION']
@@ -87,10 +89,10 @@ ibm_db.close #Cerrando la conexión
 
 ################# Lectura del archivo diccionario #############################
 
-path = 'C:/Users/alop/OneDrive - Inter-American Development Bank Group/Desktop/GitRepositories/calculo_cartera_digital_scl'
+path = 'C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/Documents/Data Governance - SCL/Cartera digital'
 
 ####Se forma un solo diccionario
-Diccionario=pd.ExcelFile(path+'/input/01_Diccionario_token_digital.xlsx')
+Diccionario=pd.ExcelFile(path+'/Inputs/01_Diccionario_token_digital.xlsx')
 Diccionario =Diccionario.parse('Sheet1')############Lectura de data
 Diccionario.head()####ver los primeros registros de la data
 Diccionario.columns.values ###Los nombres de las columnas
@@ -123,7 +125,7 @@ Diccionario_Total2 = Diccionario_Total[['TIPO','PALABRAS','TOKENS']].drop_duplic
 
 
 #######Lectura de diccionario para los textos que se encuentran en sin definir #########
-diccionario_bigrama = pd.read_excel(path+'/input/02_Diccionario_bigrama_digital.xlsx',sheet_name='Hoja1')
+diccionario_bigrama = pd.read_excel(path+'/Inputs/02_Diccionario_bigrama_digital.xlsx',sheet_name='Hoja1')
 diccionario_bigrama_En=diccionario_bigrama[['TIPO','INGLES']]
 diccionario_bigrama_En.dropna(inplace=True)
 diccionario_bigrama_En.rename(columns = {'INGLES':'PALABRAS'},inplace=True)
@@ -804,9 +806,9 @@ BC['RESULT_OBJECTIVE_TECN-INNOV']=a
 #
 
 ################ DEFINIR DIGITAL/NO DIGITAL POR OPERACION ##################################
-y=os.listdir(path+"/output")
+y=os.listdir(path+"/Outputs")
 if "Resultados" not in y:
-    os.mkdir(path+"/output/Resultados")
+    os.mkdir(path+"/Outputs/Resultados")
 
 
 Titulo=A[0][['OPERATION_NUMBER','OPERATION_NAME','RESULT_OPERATION_NAME','RESULT_'+'OPERATION_NAME_'+'TECN-INNOV']]
@@ -891,10 +893,12 @@ Palabras.rename(columns={'PALABRAS':'COUNT_WORDS'},inplace=True)
 Palabras.reset_index(inplace=True)
 
 ########EXPORTAR ARCHIVOS#############
-with pd.ExcelWriter(path+"/output/output.xlsx") as writer:
+with pd.ExcelWriter(path+"/Outputs/output.xlsx") as writer:
     Titulo.to_excel(writer,sheet_name="Operation_Name",index=False)
     Objetivo.to_excel(writer,sheet_name="Objetivo",index=False)
     Componentes1.to_excel(writer,sheet_name="Component",index=False)
     Producto1.to_excel(writer,sheet_name="Output_Name",index=False)
     Bas.to_excel(writer,sheet_name="Metadata",index=False)
     Palabras.to_excel(writer,sheet_name="palabras",index=False)
+    
+   
