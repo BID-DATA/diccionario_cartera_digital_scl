@@ -22,7 +22,7 @@ from openpyxl import load_workbook
 
 # Aquí se extrae la información de las operaciones del pipeline
 
-conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=mariarey;PWD=15121995Andrea$;", "", "") #Abriendo conexión con repositorio de datos DB2
+conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=mariarey;PWD=password;", "", "") #Abriendo conexión con repositorio de datos DB2
 
 sql = "SELECT DISTINCT C.OPER_NUM AS OPERATION_NUMBER, C.OPER_TYP_CD, C.PIPE_YR, C.OPER_ENGL_NM, C.REGN, C.CNTRY_BENFIT, C.TEAM_LEADER_NM, C.TEAM_LEADER_PCM,\
     C.APPRVL_DT as APPROVAL_DATE, C.PREP_RESP_DEPT_CD AS SECTOR ,  C.PREP_RESP_DIV_CD AS DIVISION,  PHASE_CD \
