@@ -32,7 +32,7 @@ import ibm_db
 
 ##################### Extracción de datos operaciones #########################
 
-conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=***REMOVED***;PWD=***REMOVED***;", "", "") #Abriendo conexión con repositorio de datos DB2
+conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=***REMOVED***;PWD=password;", "", "") #Abriendo conexión con repositorio de datos DB2
 
 sql = "SELECT DISTINCT C.OPER_NUM as OPERATION_NUMBER, C.PIPE_YR, C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION,\
 	C.PIPE_YR, C.TEAM_LEADER_NM, C.TEAM_LEADER_PCM, C.REGN AS REGION, C.CNTRY_BENFIT AS COUNTRY, C.STS_CD AS STATUS, C.STG_ENGL_NM AS STAGE, C.STS_ENGL_NM AS TAXONOMY, C.APPRVL_DT AS APPROVAL_DATE, C.APPRVL_DT_YR as APPROVAL_YEAR,\
@@ -876,7 +876,7 @@ Palabras.reset_index(inplace=True)
 
 ######### Juntar archivo de pipeline con revisión de texto para ver cuáles salieron como dig #######
 
-Base_pipe=Metadatos_pipe[['OPERATION_NUMBER', 'PIPE_YR','OPERATION_TYPE','OPERATION_TYPE_NAME',
+Base_pipe=Metadatos_pipe[['OPERATION_NUMBER', 'OPERATION_NAME', 'PIPE_YR','OPERATION_TYPE','OPERATION_TYPE_NAME',
            'OPERATION_MODALITY','TAXONOMY','STATUS','REGION','COUNTRY','DEPARTMENT','DIVISION','TEAM_LEADER_NM','APPROVAL_DATE',
            'APPROVAL_AMOUNT','CURRENT_EXPIRATION_DATE']]
 
@@ -906,7 +906,7 @@ Base_pipe = Base_pipe.merge(checklist_tidy, on = 'OPERATION_NUMBER', how = 'left
 #quedarnos con dummy digital delchecklist si es que la tiene si no con la del diccionario, sino "no se tiene información"
 Base_pipe['DIGITAL']=Base_pipe['DUMMY_DIGITAL_CL']
 Base_pipe['DIGITAL']=Base_pipe['DIGITAL'].fillna(Base_pipe['DUMMY_DIGITAL'])
-Base_pipe=Base_pipe[['OPERATION_NUMBER','OPERATION_TYPE', 'PIPE_YR','OPERATION_TYPE_NAME','OPERATION_MODALITY','TAXONOMY','STATUS','REGION','COUNTRY','DEPARTMENT','DIVISION','TEAM_LEADER_NM','APPROVAL_DATE',
+Base_pipe=Base_pipe[['OPERATION_NUMBER','OPERATION_NAME','OPERATION_TYPE', 'PIPE_YR','OPERATION_TYPE_NAME','OPERATION_MODALITY','TAXONOMY','STATUS','REGION','COUNTRY','DEPARTMENT','DIVISION','TEAM_LEADER_NM','APPROVAL_DATE',
            'APPROVAL_AMOUNT','DIGITAL', 'INFO','INFRA','GOB','CULTURA', 'DIGITAL_TRANS']]
 
 ########EXPORTAR ARCHIVOS#############
