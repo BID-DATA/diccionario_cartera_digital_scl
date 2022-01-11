@@ -59,7 +59,7 @@ import ibm_db
 
 ##################### Extracción de datos operaciones #########################
 
-conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=***REMOVED***;PWD=***REMOVED***;", "", "") #Abriendo conexión con repositorio de datos DB2 
+conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=***REMOVED***;PWD=password;", "", "") #Abriendo conexión con repositorio de datos DB2 
 
 sql = "SELECT DISTINCT 	C.OPER_NUM as OPERATION_NUMBER,	C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION,\
 	C.REGN AS REGION, C.CNTRY_BENFIT AS COUNTRY, C.STS_CD AS STATUS, C.STG_ENGL_NM AS STAGE, C.STS_ENGL_NM AS TAXONOMY, C.OPER_EXEC_STS AS EXEC_STS, C.APPRVL_DT AS APPROVAL_DATE, 	C.APPRVL_DT_YR as APPROVAL_YEAR,\
@@ -69,7 +69,7 @@ FROM ODS.SPD_ODS_HOPERMAS C \
 	JOIN ( select OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ODS.SPD_ODS_HOPERMAS GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT \
  	JOIN ODS.OPER_ODS_OPER A ON C.OPER_NUM = A.OPER_NUM \
  	JOIN ODS.OPER_ODS_OUTPUT_IND B ON C.OPER_NUM = B.OPER_NUM \
-WHERE C.APPRVL_DT_YR > 2015  AND C.PREP_RESP_DEPT_CD='SCL' AND C.STS_CD='ACTIVE' AND DATE(C.APPRVL_DT)<DATE(NOW()) " #SQL query de datos deseados, MRT: se agrega filtro de fecha de aprobación menor al día de hoy
+WHERE C.APPRVL_DT_YR > 2015  AND C.PREP_RESP_DEPT_CD='SCL' AND DATE(C.APPRVL_DT)<DATE(NOW()) " #SQL query de datos deseados, MRT: se agrega filtro de fecha de aprobación menor al día de hoy y se quita =ACTIVE
 
 stmt = ibm_db.exec_immediate(conn, sql) #Querying data
 
