@@ -32,7 +32,7 @@ import ibm_db
 
 ##################### Extracción de datos operaciones #########################
 
-conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=mariarey;PWD=password;", "", "") #Abriendo conexión con repositorio de datos DB2
+conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=user;PWD=password;", "", "") #Abriendo conexión con repositorio de datos DB2
 
 sql = "SELECT DISTINCT C.OPER_NUM as OPERATION_NUMBER, C.PIPE_YR, C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION,\
 	C.PIPE_YR, C.TEAM_LEADER_NM, C.TEAM_LEADER_PCM, C.REGN AS REGION, C.CNTRY_BENFIT AS COUNTRY, C.STS_CD AS STATUS, C.STG_ENGL_NM AS STAGE, C.STS_ENGL_NM AS TAXONOMY, C.APPRVL_DT AS APPROVAL_DATE, C.APPRVL_DT_YR as APPROVAL_YEAR,\
@@ -42,7 +42,7 @@ FROM ODS.SPD_ODS_HOPERMAS C \
 JOIN ( select OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ODS.SPD_ODS_HOPERMAS GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT \
  	JOIN ODS.OPER_ODS_OPER A ON C.OPER_NUM = A.OPER_NUM \
  	JOIN ODS.OPER_ODS_OUTPUT_IND B ON C.OPER_NUM = B.OPER_NUM \
-WHERE (DATE(C.APPRVL_DT) > DATE(NOW()) OR C.APPRVL_DT is null) AND C.PREP_RESP_DEPT_CD='SCL' AND C.OPER_CAT_CD='A' AND C.PIPE_YR>2020" #SQL query de datos deseados pipeline A
+WHERE (DATE(C.APPRVL_DT) > DATE(NOW()) OR C.APPRVL_DT is null) AND C.PREP_RESP_DEPT_CD='SCL' AND C.OPER_CAT_CD='A' AND C.PIPE_YR>2020 AND (C.OPER_TYP_CD='LON' OR C.OPER_TYP_CD='GRF' OR C.OPER_TYP_CD = 'TCP')" #SQL query de datos deseados pipeline A
 
 stmt = ibm_db.exec_immediate(conn, sql) #Querying data
 
@@ -65,7 +65,7 @@ sql_pipe = "SELECT DISTINCT C.OPER_NUM as OPERATION_NUMBER, C.PIPE_YR, C.OPER_EN
 FROM ODS.SPD_ODS_HOPERMAS C \
 JOIN ( select OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ODS.SPD_ODS_HOPERMAS GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT \
  	JOIN ODS.OPER_ODS_OPER A ON C.OPER_NUM = A.OPER_NUM \
-WHERE (DATE(C.APPRVL_DT) > DATE(NOW()) OR C.APPRVL_DT is null) AND C.PREP_RESP_DEPT_CD='SCL' AND C.OPER_CAT_CD='A' AND C.PIPE_YR>2020" #SQL query de datos deseados pipeline A"
+WHERE (DATE(C.APPRVL_DT) > DATE(NOW()) OR C.APPRVL_DT is null) AND C.PREP_RESP_DEPT_CD='SCL' AND C.OPER_CAT_CD='A' AND C.PIPE_YR>2020 AND (C.OPER_TYP_CD='LON' OR C.OPER_TYP_CD='GRF' OR C.OPER_TYP_CD = 'TCP')" #SQL query de datos deseados pipeline A"
     
 stmt_pipe = ibm_db.exec_immediate(conn, sql_pipe) #Querying data
 
@@ -882,7 +882,7 @@ Base_pipe=Metadatos_pipe[['OPERATION_NUMBER', 'OPERATION_NAME', 'PIPE_YR','OPERA
 
 oper_proc = Bas[['OPERATION_NUMBER', 'DUMMY_DIGITAL', 'DUMMY_OBJETIVO_DIG', 'DUMMY_OUTPUT_DIG', 'DIG_OUTPUT_DESCRIPTION']]
 Base_pipe = Base_pipe.merge(oper_proc, on = 'OPERATION_NUMBER', how = 'left')
-Base_pipe['DUMMY_DIGITAL'] = Base_pipe['DUMMY_DIGITAL'].fillna("No hay suficiente información")
+Base_pipe['DUMMY_DIGITAL'] = Base_pipe['DUMMY_DIGITAL'].fillna("No se ha llenado checklist")
 
 # leer información de checklist y pegar
 
