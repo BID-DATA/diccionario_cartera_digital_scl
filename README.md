@@ -1,4 +1,4 @@
-# Cartera digital del sector social
+# Cartera digital del Sector Social - IDB
 
 [![IDB Logo](https://scldata.iadb.org/assets/iadb-7779368a000004449beca0d4fc6f116cc0617572d549edf2ae491e9a17f63778.png)](https://scldata.iadb.org)
 
@@ -65,4 +65,4 @@ Debido a que las operaciones en cartera en ejecución y en pipeline cambian con 
 4. Revisar el dashborad resultante. 
 5. Publicar el archivo resultante y asegurarse que este fue publicado correctamente.
 
-- Actualmente la persona encargada de este repositorio es María Reyes Retana (***REMOVED***@iadb.org)
+- Actualmente la persona encargada de este repositorio es María Reyes Retana (mariarey@iadb.org)
