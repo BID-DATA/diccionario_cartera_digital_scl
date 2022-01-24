@@ -34,7 +34,7 @@ lo tenga el manager actual.
 
 **2. Clonar el repositorio**
 
-#### Git Workflow ####
+### Git Workflow ###
 
 Para mantener estructurado y estandarizado, el repositorio tiene dos branches principales: **1. Master**
 y **2. Development**. Esto ayuda a mantener la estructura de trabajo y minimizar los errores. En particular, estas dos ramas tienen las siguientes funciones.
@@ -54,7 +54,7 @@ Debido a que podría darse el caso de un trabajo de forma paralela entre varios 
 2) Una vez terminado el proceso de modificación o ajuste de los scripts se debe realizar el pull request para realizar el merge. Se debe tener en cuenta que el merge siempre se debe solicitar para realiza en la Branch de Development. 
 3) Una vez se realiza la solitud de merge, se revisa y verifica que no existan errores en el nuevo pull antes de aceptar el merge a la branch principal. 
 
-#### Actualización ####
+### Actualización ### 
 
 Debido a que las operaciones en cartera en ejecución y en pipeline cambian con relativa frecuencia, el dashboard debe de ser actualizado por lo menos dos veces al mes. Esto implica lo siguiente:
 1. Correr el código de cartera en ejecución (*cartera_digital_completo_scl*). 
