@@ -3,11 +3,11 @@
 ## Descripción
 El repositorio cartera_digital_scl contiene los scripts necesarios para generar la información utilizada en el dashborad de cartera digital. El objetivo de la cartera digital es contar con una herramienta que mida de forma precisa y actualizada las operaciones digitales del Sector Social. Esta se compone de dos partes **1. cartera en ejecución** y **2. pipeline**
 
-Para catalogar las operaciones de la **cartera en ejecución** se utiliza como herramienta principal un código de análisis de texto, el código se conecta a la base de datos del banco para obtener la información de las operaciones. Después de esto el código realiza un procesamiento de texto y búsqueda de palabras, por medio de los cuales asignaremos una clasificación de acuerdo a un diccionario previamente establecido. Esto se encuentra en el código principal del repositorio titulado *cartera_digital_completo_scl.py*
+Para catalogar las operaciones de la **cartera en ejecución** se utiliza como herramienta principal un código de análisis de texto, el código se conecta a la base de datos del banco para obtener la información de las operaciones. Después de esto, el código realiza un procesamiento de texto y búsqueda de palabras, por medio de los cuales asignaremos una clasificación de acuerdo a un diccionario previamente establecido. Esto se encuentra en el código principal del repositorio titulado *cartera_digital_completo_scl.py*
 
 En segundo lugar, para la clasificación del **pipeline** se utiliza el Checklist digital de SCL disponible para su llenado [aquí](https://www.jotform.com/form/211395055225047). Esta información se utiliza en conjunto con la información de la base de datos del banco y se concatena en el código *pipeline - diccionario.py*.
  
-La primera versión del diccionario utilizado para catalogar las operaciones, fue creado por el departamento de CSC del BID y luego actualizado por el front office del Sector Social. Entre los grupos se han determinado palabras clave para clasificar el tipo de ##operacion## al que se refiere el texto, es decir, clasificar en un texto tipo DIGITAL, NO DIGITAL
+La primera versión del diccionario utilizado para catalogar las operaciones, fue creado por el departamento de CSC del BID y luego actualizado por el front office del Sector Social. Entre los grupos se han determinado palabras clave para clasificar el tipo de operación al que se refiere el texto, es decir, clasificar en un texto tipo DIGITAL, NO DIGITAL
  
 El Dashboard resultante puede ser consultado [aquí](https://app.powerbi.com/groups/me/reports/292b5455-fb3f-4e0a-a719-babd34bf4c2f/ReportSection5810b828c73cd57c2b25?ctid=9dfb1a05-5f1d-449a-8960-62abcb479e7d)
 
@@ -26,8 +26,11 @@ Antes de empezar a trabajar o contribuir en la elaboración de la cartera digita
 **1. Permisos necesarios**
 
 En primer lugar, para correr el código es necesario tener acceso a la base IBM Db2 del Banco [aquí](https://slpedw.iadb.org/console/#explore/table). Para tal efecto, es necesario levantar un ticket con el equipo de seguridad para tener los permisos requeridos.
-Como se mencionó anteriormente, para la elaboración de la parte de **pipeline** de este repositorio se utiliza como insumo principal el input que otorgan los especialistas a través del **checklist digital**. El checklist se encuentra en Jotform en donde se almacena la información que llenan los especialistas. Cada nueva respuesta en el Checklist genera una nueva fila de información en el Excel de Pipeline. Adicionalmente, la información puede ser directamente consultada en la cuenta de Jotform. Únicamente la persona encargada de este repositorio debe tener acceso a esta cuenta. 
-Antes de volverse manager de este repositorio se debe solicitar el traspaso de la cuenta de Jotform, y una vez con el acceso otorgado se deben cambiar las contraseñas para asegurar la seguridad de la información.
+
+En segundo lugar, como se mencionó anteriormente, para la elaboración de la parte de **pipeline** de este repositorio se utiliza como insumo principal el input que otorgan los especialistas a través del **checklist digital**. El checklist se encuentra en Jotform en donde se almacena la información que llenan los especialistas. Cada nueva respuesta en el Checklist genera una nueva fila de información en el Excel de Pipeline. Adicionalmente, la información puede ser directamente consultada en la cuenta de Jotform. Únicamente la persona encargada de este repositorio debe tener acceso a esta cuenta. 
+
+Antes de volverse manager de este repositorio se debe solicitar el traspaso de la cuenta de Jotform, y una vez con el acceso otorgado se deben cambiar las contraseñas para asegurar la seguridad de la información. Es responsabilidad del manager anterior y actual hacer el traspaso de cuenta en tiempo y en forma, así como asegurar el acceso único 
+lo tenga el manager actual.
 
 **2. Clonar el repositorio**
 
