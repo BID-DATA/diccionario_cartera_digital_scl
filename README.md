@@ -1,5 +1,7 @@
 # Cartera digital del sector social
 
+[![IDB Logo](https://scldata.iadb.org/assets/iadb-7779368a000004449beca0d4fc6f116cc0617572d549edf2ae491e9a17f63778.png)](https://scldata.iadb.org)
+
 ## Descripción
 El repositorio cartera_digital_scl contiene los scripts necesarios para generar la información utilizada en el dashborad de cartera digital. El objetivo de la cartera digital es contar con una herramienta que mida de forma precisa y actualizada las operaciones digitales del Sector Social. Esta se compone de dos partes **1. cartera en ejecución** y **2. pipeline**
 
