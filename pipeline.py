@@ -92,3 +92,4 @@ Base_pipe=Base_pipe[['OPERATION_NUMBER','OPERATION_NAME','OPERATION_TYPE', 'PIPE
 
 with pd.ExcelWriter(path_save+"/output-pipe.xlsx") as writer:
     Base_pipe.to_excel(writer,sheet_name="Metadata",index=False)
+    
