@@ -22,7 +22,7 @@ from openpyxl import load_workbook
 
 # Aquí se extrae la información de las operaciones del pipeline
 
-conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=user;PWD=password;", "", "") #Abriendo conexión con repositorio de datos DB2
+conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=mariarey;PWD=Andrea$15121995;", "", "") #Abriendo conexión con repositorio de datos DB2
 
 sql_pipe = "SELECT DISTINCT C.OPER_NUM as OPERATION_NUMBER, C.PIPE_YR, C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION,\
 	C.PIPE_YR, C.TEAM_LEADER_NM, C.TEAM_LEADER_PCM, C.REGN AS REGION, C.CNTRY_BENFIT AS COUNTRY, C.STS_CD AS STATUS, C.STG_ENGL_NM AS STAGE, C.STS_ENGL_NM AS TAXONOMY, C.APPRVL_DT AS APPROVAL_DATE, C.APPRVL_DT_YR as APPROVAL_YEAR,\
@@ -84,33 +84,11 @@ Base_pipe['DUMMY_DIGITAL_CL'] = Base_pipe['DUMMY_DIGITAL_CL'].replace(1, "Digita
 
 ##### Guardar #####
 
-#path_save = "C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/General/cartera digital/Dashboard"
+path_save = "C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/General/cartera digital/Dashboard"
 
-#Base_pipe['DIGITAL']=Base_pipe['DUMMY_DIGITAL_CL']
-#Base_pipe=Base_pipe[['OPERATION_NUMBER','OPERATION_NAME','OPERATION_TYPE', 'PIPE_YR','OPERATION_TYPE_NAME','OPERATION_MODALITY','TAXONOMY','STATUS','REGION','COUNTRY','DEPARTMENT','DIVISION','TEAM_LEADER_NM','APPROVAL_DATE',
- #          'APPROVAL_AMOUNT','DIGITAL', 'INFO','INFRA','GOB','CULTURA', 'DIGITAL_TRANS']]
+Base_pipe['DIGITAL']=Base_pipe['DUMMY_DIGITAL_CL']
+Base_pipe=Base_pipe[['OPERATION_NUMBER','OPERATION_NAME','OPERATION_TYPE', 'PIPE_YR','OPERATION_TYPE_NAME','OPERATION_MODALITY','TAXONOMY','STATUS','REGION','COUNTRY','DEPARTMENT','DIVISION','TEAM_LEADER_NM','APPROVAL_DATE',
+          'APPROVAL_AMOUNT','DIGITAL', 'INFO','INFRA','GOB','CULTURA', 'DIGITAL_TRANS']]
 
-#with pd.ExcelWriter(path_save+"/output-pipe.xlsx") as writer:
-#    Base_pipe.to_excel(writer,sheet_name="Metadata",index=False)
-
-### Salvar información para jotform #####
-#únicamente vamos a salvar la información de la columna operaciones que es la que se usa para el link de jotform y Power automate
-# Esto reescribe la columna operaciones pero debe de abrirse y volverse a guardar para que el flujo no se rompa.
-
-#path = 'C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/General/documents' 
-
-#Titulo = Metadatos['OPERATION_NUMBER']
-
-#book = load_workbook(path+"/Triage_digital.xlsx")
-
-#writer = pd.ExcelWriter(path+"/Triage_digital.xlsx", engine='openpyxl') 
-
-#writer.book = book
-
-
-#writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-#Metadatos.to_excel(writer,sheet_name="Metadata", index=False)
-#Titulo.to_excel(writer, sheet_name = "operaciones", index=False)
-
-#writer.save()
-#writer.close()
+with pd.ExcelWriter(path_save+"/output-pipe.xlsx") as writer:
+    Base_pipe.to_excel(writer,sheet_name="Metadata",index=False)
