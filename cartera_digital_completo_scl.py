@@ -59,61 +59,37 @@ import ibm_db
 
 ##################### Extracción de datos operaciones #########################
 
-conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=usuario;PWD=contraseña;", "", "") #Abriendo conexión con repositorio de datos DB2 
+conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=;PWD=;", "", "") #Abriendo conexión con repositorio de datos DB2 \
+    
+sql_cost = "WITH \
+OUTPUTS AS ( \
+SELECT DISTINCT OPER_NUM, ANNL_PLAN, YR, OUTPUT_DEFNTN,CMPNT_STMNT, ROW_NUMBER()OVER(PARTITION BY OPER_NUM, OUTPUT_DEFNTN ORDER BY YR DESC,ANNL_PLAN DESC)NUMBER_ROW \
+FROM ODS.OPER_ODS_OUTPUT_IND \
+) \
+SELECT DISTINCT 	C.OPER_NUM as OPERATION_NUMBER,	C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION, \
+	C.REGN AS REGION, C.CNTRY_BENFIT AS COUNTRY, C.STS_CD AS STATUS, C.STG_ENGL_NM AS STAGE, C.STS_ENGL_NM AS TAXONOMY, C.OPER_EXEC_STS AS EXEC_STS, C.APPRVL_DT AS APPROVAL_DATE, 	C.APPRVL_DT_YR as APPROVAL_YEAR, \
+    C.ORIG_APPRVD_USEQ_AMNT AS APPROVAL_AMOUNT, C.CURNT_DISB_EXPR_DT as CURRENT_EXPIRATION_DATE, C.RELTN_NUM AS RELATED_OPER,C.FACILITY_TYP_CD AS RELATION_TYPE, C.OPER_TYP_CD AS OPERATION_TYPE, A.OBJTV_ENGL as OBJECTIVE_EN, \
+    A.OBJTV_SPANISH as OBJECTIVE_ES, B.CMPNT_STMNT as COMPONENT_NAME, B.OUTPUT_DEFNTN as OUTPUT_NAME, C.FACILITY_TYP_ENGL_NM AS OUTPUT_DESCRIPTION, B.ANNL_PLAN AS OUTPUT_COST \
+FROM ODS.SPD_ODS_HOPERMAS C  \
+  JOIN (SELECT OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ODS.SPD_ODS_HOPERMAS GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT  \
+  LEFT JOIN ODS.OPER_ODS_OPER A ON C.OPER_NUM = A.OPER_NUM \
+  LEFT JOIN (SELECT * FROM OUTPUTS  WHERE NUMBER_ROW=1) B ON C.OPER_NUM = B.OPER_NUM \
+WHERE C.APPRVL_DT_YR > 2015  AND C.PREP_RESP_DEPT_CD='SCL' AND DATE(C.APPRVL_DT)<DATE(NOW()) AND ( C.OPER_TYP_CD= 'TCP' OR  C.OPER_TYP_CD = 'LON')" #SQL query de datos deseados, MRT: se agrega filtro de fecha de aprobación menor al día de hoy y se quita =ACTIVE
 
-sql = "SELECT DISTINCT 	C.OPER_NUM as OPERATION_NUMBER,	C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION,\
-	C.REGN AS REGION, C.CNTRY_BENFIT AS COUNTRY, C.STS_CD AS STATUS, C.STG_ENGL_NM AS STAGE, C.STS_ENGL_NM AS TAXONOMY, C.OPER_EXEC_STS AS EXEC_STS, C.APPRVL_DT AS APPROVAL_DATE, 	C.APPRVL_DT_YR as APPROVAL_YEAR,\
-    C.ORIG_APPRVD_USEQ_AMNT AS APPROVAL_AMOUNT, C.CURNT_DISB_EXPR_DT as CURRENT_EXPIRATION_DATE, C.RELTN_NUM AS RELATED_OPER,C.FACILITY_TYP_CD AS RELATION_TYPE, C.OPER_TYP_CD AS OPERATION_TYPE, A.OBJTV_ENGL as OBJECTIVE_EN,\
-    A.OBJTV_SPANISH as OBJECTIVE_ES, B.CMPNT_STMNT as COMPONENT_NAME, B.OUTPUT_DEFNTN as OUTPUT_NAME, C.FACILITY_TYP_ENGL_NM AS OUTPUT_DESCRIPTION \
-FROM ODS.SPD_ODS_HOPERMAS C \
-	JOIN ( select OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ODS.SPD_ODS_HOPERMAS GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT \
- 	JOIN ODS.OPER_ODS_OPER A ON C.OPER_NUM = A.OPER_NUM \
- 	JOIN ODS.OPER_ODS_OUTPUT_IND B ON C.OPER_NUM = B.OPER_NUM \
-WHERE C.APPRVL_DT_YR > 2015  AND C.PREP_RESP_DEPT_CD='SCL' AND DATE(C.APPRVL_DT)<DATE(NOW()) AND ( C.OPER_TYP_CD= 'TCP' OR  C.OPER_TYP_CD = 'LON' OR  C.OPER_TYP_CD = 'GRF')" #SQL query de datos deseados, MRT: se agrega filtro de fecha de aprobación menor al día de hoy y se quita =ACTIVE
-
-stmt = ibm_db.exec_immediate(conn, sql) #Querying data
+stmt_cost = ibm_db.exec_immediate(conn, sql_cost) #Querying data
 
 #Creando base de datos con query
-cols = ['OPERATION_NUMBER', 'OPERATION_NAME', 'OPERATION_TYPE_NAME', 'OPERATION_MODALITY', 'DEPARTMENT', 'DIVISION', 'REGION', 'COUNTRY', 'STATUS', 'STAGE', 'TAXONOMY', 'EXEC_STS', 'APPROVAL_DATE', 'APPROVAL_YEAR', 'APPROVAL_AMOUNT', 'CURRENT_EXPIRATION_DATE', 'RELATED_OPER', 'RELATION_TYPE', 'OPERATION_TYPE', 'OBJECTIVE_EN', 'OBJECTIVE_ES', 'COMPONENT_NAME', 'OUTPUT_NAME', 'OUTPUT_DESCRIPTION']
-Metadatos = pd.DataFrame(columns=cols)
-result = ibm_db.fetch_both(stmt)
-while(result):
-    Metadatos = Metadatos.append(result, ignore_index=True)
-    result = ibm_db.fetch_both(stmt)
+cols_cost = ['OPERATION_NUMBER', 'OPERATION_NAME', 'OPERATION_TYPE_NAME', 'OPERATION_MODALITY', 'DEPARTMENT', 'DIVISION', 'REGION', 'COUNTRY', 'STATUS', 'STAGE', 'TAXONOMY', 'EXEC_STS', 'APPROVAL_DATE', 'APPROVAL_YEAR',
+        'APPROVAL_AMOUNT', 'CURRENT_EXPIRATION_DATE', 'RELATED_OPER', 'RELATION_TYPE', 'OPERATION_TYPE', 'OBJECTIVE_EN', 'OBJECTIVE_ES', 'COMPONENT_NAME', 'OUTPUT_NAME', 'OUTPUT_DESCRIPTION', 'OUTPUT_COST']
+Metadatos = pd.DataFrame(columns=cols_cost)
+result_cost = ibm_db.fetch_both(stmt_cost)
+while(result_cost):
+    Metadatos = Metadatos.append(result_cost, ignore_index=True)
+    result_cost = ibm_db.fetch_both(stmt_cost)
 
-Metadatos = Metadatos.iloc[:, 0:24]
+Metadatos = Metadatos.iloc[:, 0:25]
 Metadatos.shape #Visualizando resultado
 
-# solo leer operaciones cartera sin output porque muchas operaciones se pierden en ese paso
-sql_oper = "SELECT DISTINCT C.OPER_NUM as OPERATION_NUMBER, C.PIPE_YR, C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION,\
-	C.PIPE_YR, C.TEAM_LEADER_NM, C.TEAM_LEADER_PCM, C.REGN AS REGION, C.CNTRY_BENFIT AS COUNTRY, C.STS_CD AS STATUS, C.STG_ENGL_NM AS STAGE, C.STS_ENGL_NM AS TAXONOMY, C.APPRVL_DT AS APPROVAL_DATE, C.APPRVL_DT_YR as APPROVAL_YEAR,\
-    C.ORIG_APPRVD_USEQ_AMNT AS APPROVAL_AMOUNT, C.CURNT_DISB_EXPR_DT as CURRENT_EXPIRATION_DATE, C.RELTN_NUM AS RELATED_OPER, C.OPER_TYP_CD AS OPERATION_TYPE, A.OBJTV_ENGL as OBJECTIVE_EN,\
-    A.OBJTV_SPANISH as OBJECTIVE_ES, C.FACILITY_TYP_ENGL_NM AS OUTPUT_DESCRIPTION \
-FROM ODS.SPD_ODS_HOPERMAS C \
-JOIN ( select OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ODS.SPD_ODS_HOPERMAS GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT \
- 	JOIN ODS.OPER_ODS_OPER A ON C.OPER_NUM = A.OPER_NUM \
-WHERE C.APPRVL_DT_YR > 2015  AND C.PREP_RESP_DEPT_CD='SCL' AND DATE(C.APPRVL_DT)<DATE(NOW()) AND ( C.OPER_TYP_CD= 'TCP' OR  C.OPER_TYP_CD = 'LON' OR  C.OPER_TYP_CD = 'GRF')" #SQL query de datos deseados, MRT: se agrega filtro de fecha de aprobación menor al día de hoy y se quita =ACTIVE
-    
-stmt_oper = ibm_db.exec_immediate(conn, sql_oper) #Querying data
-
-#Creando base de datos con query pipe
-cols_oper = ['OPERATION_NUMBER', 'OPERATION_NAME', 'OPERATION_TYPE_NAME', 'OPERATION_MODALITY', 'DEPARTMENT', 'DIVISION', 'REGION', 'COUNTRY', 'STATUS', 'STAGE', 'TAXONOMY', 'EXEC_STS', 'APPROVAL_DATE', 'APPROVAL_YEAR', 'APPROVAL_AMOUNT', 'CURRENT_EXPIRATION_DATE', 'RELATED_OPER', 'RELATION_TYPE', 'OPERATION_TYPE', 'OBJECTIVE_EN', 'OBJECTIVE_ES', 'COMPONENT_NAME', 'OUTPUT_NAME', 'OUTPUT_DESCRIPTION']
-Metadatos_oper = pd.DataFrame(columns=cols_oper)
-result_oper = ibm_db.fetch_both(stmt_oper)
-while(result_oper):
-    Metadatos_oper = Metadatos_oper.append(result_oper, ignore_index=True)
-    result_oper = ibm_db.fetch_both(stmt_oper)
-
-Metadatos_oper = Metadatos_oper.iloc[:, 0:24]
-Metadatos_oper.shape #Visualizando resultado  
-    
-ibm_db.close #Cerrando la conexión
-
-### prueba juntar 
-
-Metadatos_left = Metadatos_oper[~Metadatos_oper.OPERATION_NUMBER.isin(Metadatos.OPERATION_NUMBER)] # operaciones que no están en DF de operaciones con outputs
-
-Metadatos = pd.concat([Metadatos, Metadatos_left])
 
 ################# Lectura del archivo diccionario #############################
 
@@ -845,8 +821,6 @@ Objetivo=BC[['OPERATION_NUMBER','OBJECTIVE_ES','OBJECTIVE_EN','RESULT_OBJETIVO',
 Componentes1=D[0][['OPERATION_NUMBER','COMPONENT_NAME','RESULT_COMPONENT_NAME']]
 Producto1=E[0][['OPERATION_NUMBER','COMPONENT_NAME','OUTPUT_NAME','RESULT_OUTPUT_NAME']]
 
-
-
 Componentes=D[0][['OPERATION_NUMBER','COMPONENT_NAME','RESULT_COMPONENT_NAME']]
 Componentes=Componentes.groupby(['OPERATION_NUMBER','RESULT_COMPONENT_NAME'])['COMPONENT_NAME'].count().unstack()
 Componentes.fillna(0,inplace=True)
@@ -861,10 +835,17 @@ Producto['DIGITAL_OUT']=Producto['DIGITAL']/(Producto['DIGITAL']+Producto['NO DI
 Producto.drop(columns=['DIGITAL','NO DIGITAL'],inplace=True)
 Producto.reset_index(inplace=True)
 
+Producto1 = Producto1.merge(Producto, on = 'OPERATION_NUMBER', how = 'left')
+Producto1 = Producto1.merge(Metadatos[['OUTPUT_COST','OPERATION_NUMBER','OUTPUT_NAME']], on = ['OPERATION_NUMBER','OUTPUT_NAME'], how = 'left')
+Producto1.OUTPUT_COST.fillna(0,inplace=True)
+Producto1.OUTPUT_COST = Producto1.OUTPUT_COST.astype(float)
+
+# Group digital cost by operation ONLY DIGITALS 
+Costos_op = Producto1.groupby(['OPERATION_NUMBER', 'RESULT_OUTPUT_NAME'], as_index=False)['OUTPUT_COST'].sum()
+Costos_op_digital = Costos_op[Costos_op.RESULT_OUTPUT_NAME=="DIGITAL"]
+
 Final=Titulo[["OPERATION_NUMBER","RESULT_OPERATION_NAME",'RESULT_'+'OPERATION_NAME_'+'TECN-INNOV']].merge(Objetivo[['OPERATION_NUMBER','RESULT_OBJETIVO','RESULT_OBJECTIVE_TECN-INNOV']].merge(Componentes.merge(Producto,how='outer'),how='outer'),how='outer')
 Final.fillna(0,inplace=True)
-
-
 
 
 Final['DUMMY_DIGITAL']=np.where((Final['RESULT_OPERATION_NAME']=='DIGITAL') | (Final['RESULT_OBJETIVO']=='DIGITAL'),1,np.where(((Final['RESULT_OPERATION_NAME']=='DIGITAL') | (Final['RESULT_OBJETIVO']=='DIGITAL')) |((Final['DIGITAL_COMP']>0) | (Final['DIGITAL_OUT']>0)),1,0))
@@ -889,6 +870,9 @@ Bas.rename(columns={'APPROVAL_DATE_y':'APPROVAL_DATE'},inplace=True)
 Bas=Bas.merge(Final,how='outer')
 #Bas['APPROVAL_DATE']=Bas['APPROVAL_DATE'].apply(todate)
 
+prueba = Costos_op_digital.merge(Final,how='outer')
+prueba = prueba[prueba.DUMMY_DIGITAL==1]
+
 #Agregando columna con descripción de outputs clasificados como DIGITAL 
 tempdf = Producto1[Producto1.RESULT_OUTPUT_NAME == 'DIGITAL'][['OPERATION_NUMBER', 'OUTPUT_NAME']]
 dig_out_desc = pd.DataFrame()
@@ -896,7 +880,8 @@ dig_out_desc['OPERATION_NUMBER'] = tempdf.OPERATION_NUMBER.drop_duplicates()
 dig_out_desc['DIG_OUTPUT_DESCRIPTION'] = tempdf.groupby('OPERATION_NUMBER')['OUTPUT_NAME'].transform(lambda x: '; '.join(x))
 
 Bas = Bas.merge(dig_out_desc, on = 'OPERATION_NUMBER', how = 'left')
-
+Bas = Bas.merge(Producto, on = 'OPERATION_NUMBER', how = 'left')
+Bas = Bas.merge(prueba[['OPERATION_NUMBER', 'DUMMY_DIGITAL', 'OUTPUT_COST']], on =['OPERATION_NUMBER', 'DUMMY_DIGITAL'], how = 'left')
 
 #######################################################################################################
 #NUBE DE PALABRAS
@@ -912,18 +897,12 @@ Palabras["WORDS2"]=Palabras["WORDS"].apply(singular)
 Palabras=Palabras[["OPERATION_NUMBER","WORDS2","TIPO"]]
 Palabras.rename(columns={'WORDS2':'WORDS'},inplace=True)
 
-
 #Palabras=DataFrame(Palabras["PALABRAS","WORDS"].groupby([Palabras['OPERATION_NUMBER']],Palabras['WORDS','PALABRAS']).count()) #Esta línea no corre, lo puse como está en la versión de EDU_IADB_cartera_digital que si corre
 #Palabras=DataFrame(Palabras["WORDS"].groupby([Palabras['OPERATION_NUMBER'],Palabras['WORDS']]).count())
 Palabras = DataFrame(Palabras['WORDS'].groupby([Palabras['OPERATION_NUMBER'],Palabras['WORDS'],Palabras['TIPO']]).count())
 Palabras.rename(columns={'WORDS':'COUNT_WORDS'},inplace=True)
 Palabras.rename(columns={'PALABRAS':'COUNT_WORDS'},inplace=True)
 Palabras.reset_index(inplace=True)
-
-
-######## JUNTAR PROYECTOS QUE NO TIENEN OUTPUT #################
-# Hay operaciones que no tienen output, esas se estaban sacando por completo de la cartera entonces las vamos a meter como operaciones no digitales
-
 
 ########EXPORTAR ARCHIVOS#############
 with pd.ExcelWriter(path+"/Outputs/output.xlsx") as writer:
@@ -933,5 +912,3 @@ with pd.ExcelWriter(path+"/Outputs/output.xlsx") as writer:
     Producto1.to_excel(writer,sheet_name="Output_Name",index=False)
     Bas.to_excel(writer,sheet_name="Metadata",index=False)
     Palabras.to_excel(writer,sheet_name="palabras",index=False)
-    
-   
