@@ -22,7 +22,7 @@ from openpyxl import load_workbook
 
 # Aquí se extrae la información de las operaciones del pipeline
 
-conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=mariarey;PWD=Andrea$15121995;", "", "") #Abriendo conexión con repositorio de datos DB2
+conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=;PWD=;", "", "") #Abriendo conexión con repositorio de datos DB2
 
 sql_pipe = "SELECT DISTINCT C.OPER_NUM as OPERATION_NUMBER, C.PIPE_YR, C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION,\
 	C.PIPE_YR, C.TEAM_LEADER_NM, C.TEAM_LEADER_PCM, C.REGN AS REGION, C.CNTRY_BENFIT AS COUNTRY, C.STS_CD AS STATUS, C.STG_ENGL_NM AS STAGE, C.STS_ENGL_NM AS TAXONOMY, C.APPRVL_DT AS APPROVAL_DATE, C.APPRVL_DT_YR as APPROVAL_YEAR,\
@@ -55,10 +55,9 @@ Base_pipe=Metadatos_pipe[['OPERATION_NUMBER', 'OPERATION_NAME', 'PIPE_YR', 'PIPE
 
 ##### Leer información de checklist #####
 
-path_cl = 'C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/General/documents' 
+path_cl = 'C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/General/documents/Inputs' 
 checklist = pd.read_excel(path_cl+"/Triage_digital.xlsx", sheet_name = "Sheet1")
-
-
+georef = pd.read_excel(path_cl+"/Georef.xlsx", sheet_name = "Sheet1")
 
 checklist["OPERATION_NUMBER"]=checklist["Número de la operación:"]
 checklist['INFO']=checklist['¿Se prevé comprar algún tipo de tecnología (tablets, servidores) o pagar por algún tipo de servicio digital (conexión a internet, licenciamientos, licencias de servicios como tableau?']
@@ -89,12 +88,14 @@ preclasi['PRE CLASIFICACIÓN'] = preclasi['PRE CLASIFICACIÓN'].replace(0, "No s
 Base_pipe = Base_pipe.merge(preclasi[['PRE CLASIFICACIÓN', 'OPERATION_NUMBER']], on = 'OPERATION_NUMBER', how = 'left')
 Base_pipe['PIPE_YR'] = Base_pipe['PIPE_YR'].astype(str) + '-' + Base_pipe['PIPE_T']
 
+Base_pipe = Base_pipe.merge(georef[['COUNTRY', 'ABR_PBI']], on = 'COUNTRY', how = 'left')
+
 ##### Guardar #####
 
 path_save = "C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/General/cartera digital/Dashboard"
 
 Base_pipe['DIGITAL']=Base_pipe['DUMMY_DIGITAL_CL']
-Base_pipe=Base_pipe[['OPERATION_NUMBER','OPERATION_NAME','OPERATION_TYPE', 'PIPE_YR','OPERATION_TYPE_NAME','OPERATION_MODALITY','TAXONOMY','STATUS','REGION','COUNTRY',
+Base_pipe=Base_pipe[['OPERATION_NUMBER','OPERATION_NAME','OPERATION_TYPE', 'PIPE_YR','OPERATION_TYPE_NAME','OPERATION_MODALITY','TAXONOMY','STATUS','REGION','COUNTRY', 'ABR_PBI',
                      'DEPARTMENT','DIVISION','TEAM_LEADER_NM','APPROVAL_DATE','PRE CLASIFICACIÓN', 'DIGITAL', 'INFO','INFRA','GOB','CULTURA', 'DIGITAL_TRANS']]
 
 with pd.ExcelWriter(path_save+"/output-pipe.xlsx") as writer:
