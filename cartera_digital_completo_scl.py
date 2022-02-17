@@ -90,6 +90,7 @@ while(result_cost):
 Metadatos = Metadatos.iloc[:, 0:25]
 Metadatos.shape #Visualizando resultado
 
+
 ################# Lectura del archivo diccionario #############################
 
 path = 'C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/Documents/Data Governance - SCL/Cartera digital'
@@ -835,15 +836,13 @@ Producto.drop(columns=['DIGITAL','NO DIGITAL'],inplace=True)
 Producto.reset_index(inplace=True)
 
 Producto1 = Producto1.merge(Producto, on = 'OPERATION_NUMBER', how = 'left')
-Metadatos.OUTPUT_COST = Metadatos.OUTPUT_COST.astype(float)
-Metadatos.OUTPUT_COST.fillna(0,inplace=True)
-Metadatos.OUTPUT_COST = Metadatos.OUTPUT_COST.astype(int)
 Producto1 = Producto1.merge(Metadatos[['OUTPUT_COST','OPERATION_NUMBER','OUTPUT_NAME']], on = ['OPERATION_NUMBER','OUTPUT_NAME'], how = 'left')
+Producto1.OUTPUT_COST.fillna(0,inplace=True)
+Producto1.OUTPUT_COST = Producto1.OUTPUT_COST.astype(float)
 
 # Group digital cost by operation ONLY DIGITALS 
-
-#Costos_op = Producto1.groupby(['OPERATION_NUMBER'],['RESULT_OUTPUT_NAME'])['OUTPUT_COST'].sum()
-#Costos_op_digital = Costos_op['RESULT_OUTPUT_NAME']=='DIGITAL'
+Costos_op = Producto1.groupby(['OPERATION_NUMBER', 'RESULT_OUTPUT_NAME'], as_index=False)['OUTPUT_COST'].sum()
+Costos_op_digital = Costos_op[Costos_op.RESULT_OUTPUT_NAME=="DIGITAL"]
 
 Final=Titulo[["OPERATION_NUMBER","RESULT_OPERATION_NAME",'RESULT_'+'OPERATION_NAME_'+'TECN-INNOV']].merge(Objetivo[['OPERATION_NUMBER','RESULT_OBJETIVO','RESULT_OBJECTIVE_TECN-INNOV']].merge(Componentes.merge(Producto,how='outer'),how='outer'),how='outer')
 Final.fillna(0,inplace=True)
@@ -871,6 +870,9 @@ Bas.rename(columns={'APPROVAL_DATE_y':'APPROVAL_DATE'},inplace=True)
 Bas=Bas.merge(Final,how='outer')
 #Bas['APPROVAL_DATE']=Bas['APPROVAL_DATE'].apply(todate)
 
+prueba = Costos_op_digital.merge(Final,how='outer')
+prueba = prueba[prueba.DUMMY_DIGITAL==1]
+
 #Agregando columna con descripción de outputs clasificados como DIGITAL 
 tempdf = Producto1[Producto1.RESULT_OUTPUT_NAME == 'DIGITAL'][['OPERATION_NUMBER', 'OUTPUT_NAME']]
 dig_out_desc = pd.DataFrame()
@@ -879,6 +881,7 @@ dig_out_desc['DIG_OUTPUT_DESCRIPTION'] = tempdf.groupby('OPERATION_NUMBER')['OUT
 
 Bas = Bas.merge(dig_out_desc, on = 'OPERATION_NUMBER', how = 'left')
 Bas = Bas.merge(Producto, on = 'OPERATION_NUMBER', how = 'left')
+Bas = Bas.merge(prueba[['OPERATION_NUMBER', 'DUMMY_DIGITAL', 'OUTPUT_COST']], on =['OPERATION_NUMBER', 'DUMMY_DIGITAL'], how = 'left')
 
 #######################################################################################################
 #NUBE DE PALABRAS
@@ -902,7 +905,7 @@ Palabras.rename(columns={'PALABRAS':'COUNT_WORDS'},inplace=True)
 Palabras.reset_index(inplace=True)
 
 ########EXPORTAR ARCHIVOS#############
-with pd.ExcelWriter(path+"/Outputs/output-prueba.xlsx") as writer:
+with pd.ExcelWriter(path+"/Outputs/output.xlsx") as writer:
     Titulo.to_excel(writer,sheet_name="Operation_Name",index=False)
     Objetivo.to_excel(writer,sheet_name="Objetivo",index=False)
     Componentes1.to_excel(writer,sheet_name="Component",index=False)
