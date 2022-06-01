@@ -98,6 +98,10 @@ Base_seguimiento = Base_pipe[['OPERATION_NUMBER','OPERATION_NAME','OPERATION_TYP
 
 Base_seguimiento = Base_seguimiento.sort_values(['DIGITAL_TRANS', 'APPROVAL_DATE'])
 
+Base_seguimiento_TC = Base_seguimiento[Base_seguimiento['OPERATION_TYPE']== 'TCP']
+
+Base_seguimiento_LON = Base_seguimiento[Base_seguimiento['OPERATION_TYPE']== 'LON']
+
 ##### Guardar #####
 
 path_save = "C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/General/"
@@ -110,4 +114,5 @@ with pd.ExcelWriter(path_save+"cartera digital/Dashboard/output-pipe.xlsx") as w
     Base_pipe.to_excel(writer,sheet_name="Metadata",index=False)
     
 with pd.ExcelWriter(path_save+"Seguimiento/seguimiento-operaciones.xlsx") as writer:
-    Base_seguimiento.to_excel(writer,sheet_name="Seguimiento",index=False)
+    Base_seguimiento_TC.to_excel(writer,sheet_name="Seguimiento TC",index=False)
+    Base_seguimiento_LON.to_excel(writer,sheet_name="Seguimiento LON",index=False)
