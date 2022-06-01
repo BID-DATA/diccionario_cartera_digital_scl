@@ -31,7 +31,7 @@ sql_pipe = "SELECT DISTINCT C.OPER_NUM as OPERATION_NUMBER, C.PIPE_YR, C.OPER_EN
 FROM ODS.SPD_ODS_HOPERMAS C \
 JOIN ( select OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ODS.SPD_ODS_HOPERMAS GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT \
  	JOIN ODS.OPER_ODS_OPER A ON C.OPER_NUM = A.OPER_NUM \
-WHERE (DATE(C.APPRVL_DT) > DATE(NOW()) OR C.APPRVL_DT is null) AND C.PREP_RESP_DEPT_CD='SCL' AND C.OPER_CAT_CD='A' AND C.PIPE_YR>2020 AND (C.OPER_TYP_CD='LON' OR C.OPER_TYP_CD = 'TCP')" #SQL query de datos deseados pipeline A"
+WHERE (DATE(C.APPRVL_DT) > DATE(NOW()) OR C.APPRVL_DT is null) AND C.PREP_RESP_DEPT_CD='SCL' AND (C.OPER_CAT_CD='A' OR C.OPER_CAT_CD is null) AND C.PIPE_YR>2020 AND (C.OPER_TYP_CD='LON' OR C.OPER_TYP_CD = 'TCP')" #SQL query de datos deseados pipeline A"
     
 stmt_pipe = ibm_db.exec_immediate(conn, sql_pipe) #Querying data
 
@@ -49,11 +49,11 @@ Metadatos_pipe.shape #Visualizando resultado
 ibm_db.close #Cerrando la conexión
 #base 
 
-Base_pipe_oper=Metadatos_pipe[['OPERATION_NUMBER', 'OPERATION_NAME', 'PIPE_YR']]
+Base_pipe_oper=Metadatos_pipe[['OPERATION_NUMBER','OPERATION_TYPE', 'OPERATION_NAME', 'PIPE_YR', 'DIVISION']]
 
 ##### Guardar #####
 
-path_cl = 'C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/General/documents' 
+path_cl = 'C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/General/documents/Inputs/' 
 
 with pd.ExcelWriter(path_cl+"/operaciones-pipe.xlsx") as writer:
     Base_pipe_oper.to_excel(writer,sheet_name="Oper",index=False)
