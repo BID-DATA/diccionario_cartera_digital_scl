@@ -16,7 +16,7 @@ El Dashboard resultante puede ser consultado [aquí](https://app.powerbi.com/gro
 
 Antes de empezar a trabajar en este proyecto es importante entender la categorización que hace el Sector Social en cuanto a las operaciones digitales del sector. En particular, se clasifican las operaciones digitales con base en sus componentes. Esto se explica detalladamente en el siguiente diagrama. 
 
-![Diagrama Cartera Digital](https://github.com/BID-DATA/diccionario_cartera_digital_scl/Inputs/operaciones_clasificacion.png)
+![Diagrama Cartera Digital](https://github.com/BID-DATA/diccionario_cartera_digital_scl/blob/master/Inputs/operaciones_clasificacion.png)
 
 ## Estructura de trabajo
 Este repositorio tiene una estructura estandarizada para el flujo de trabajo y contribución. Esta se estructura de la siguiente manera. 
