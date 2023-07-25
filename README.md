@@ -14,6 +14,10 @@ La primera versión del diccionario utilizado para catalogar las operaciones, fu
  
 El Dashboard resultante puede ser consultado [aquí](https://app.powerbi.com/groups/c85d5888-24d0-4d69-bbfa-8e82d4e880f0/reports/4446a94f-aace-4def-9a4d-a9497b103488/ReportSection0ab4c65391af2642b8ae?ctid=9dfb1a05-5f1d-449a-8960-62abcb479e7d&experience=power-bi)
 
+Antes de empezar a trabajar en este proyecto es importante entender la categorización que hace el Sector Social en cuanto a las operaciones digitales del sector. En particular, se clasifican las operaciones digitales con base en sus componentes. Esto se explica detalladamente en el siguiente diagrama. 
+
+![Diagrama Cartera Digital](https://github.com/BID-DATA/diccionario_cartera_digital_scl/Inputs/operaciones_clasificacion.png)
+
 ## Estructura de trabajo
 Este repositorio tiene una estructura estandarizada para el flujo de trabajo y contribución. Esta se estructura de la siguiente manera. 
 
@@ -58,7 +62,7 @@ Debido a que podría darse el caso de un trabajo de forma paralela entre varios 
 
 ### Proceso de actualización
 
-Las operaciones de la cartera en ejecución y la pipeline sufren cambios con frecuencia, lo que requiere que el dashboard se actualice al menos una vez cada trimestre. Para mantener el dashboard al día, deberás seguir los siguientes pasos:
+Las operaciones de la cartera en ejecución y pipeline sufren cambios con frecuencia, lo que requiere que el dashboard se actualice al menos una vez cada trimestre. Para mantener el dashboard al día, deberás seguir los siguientes pasos:
 
 1. **Actualizar la cartera:** 
     - **Input:** Tener instalado el ODBC driver de Data Marketplace. (Ticket con ITE)
@@ -72,6 +76,7 @@ Este proceso tiene dos partes 1. código 2. seguimiento de operaciones digitales
   - **Input:** 
     
 a. Tener instalado el ODBC driver de Data Marketplace. (Ticket con ITE) y el archivo Excel que almacena los resultados del checklist digital (triage digital) (Cartera Digital SCL>General>documents>inputs>`Triage_digital.xlsx`). 
+**Nota** El archivo de triage se actualiza automáticamente por medio del flujo de power automate, no es necesario actualizarlo. Flujo de power automate de checklist [Aquí]()
     
 b. Flujo de power automate para dar seguimiento a operaciones digitales. [Aquí](https://make.powerautomate.com/environments/Default-9dfb1a05-5f1d-449a-8960-62abcb479e7d/flows/6aa46342-35f9-49b9-8089-c26fd414040d/details)
     
@@ -89,7 +94,7 @@ b. `output-pipe-tabla.xlsx` archivo que sirve de input para el flujo de power au
     
 - **Nota:** Para **1** y **2** debes de asegurarte de cambiar las contraseñas necesarias a las tuyas (las del BID)
     en `cartera_digital_completo_scl.py` y `pipeline - diccionario.py`.
-    
+- **Nota 2:** Las operaciones en pipelina eventualmente pasaran a la cartera en ejecución. Para estas operaciones, el paso 1 en el que se clasifica la cartera en ejecución utilizando el diccionario ya no será necesario porque los especialistas ya habrán determinado si la operación es digital o no. De este modo, la clasificación realizada por los especialistas se considera más confiable y es la que se adoptará como resultado final.
 
 3. **Ejecutar el código de KPI en R:** 
   - **Input:** 
