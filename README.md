@@ -2,16 +2,21 @@
 
 [![IDB Logo](https://scldata.iadb.org/assets/iadb-7779368a000004449beca0d4fc6f116cc0617572d549edf2ae491e9a17f63778.png)](https://scldata.iadb.org)
 
-## Descripción
+## Descripción y antecedentes
+
 El repositorio cartera_digital_scl contiene los scripts necesarios para generar la información utilizada en el dashborad de cartera digital. El objetivo de la cartera digital es contar con una herramienta que mida de forma precisa y actualizada las operaciones digitales del Sector Social. Esta se compone de dos partes **1. cartera en ejecución** y **2. pipeline**
 
 Para catalogar las operaciones de la **cartera en ejecución** se utiliza como herramienta principal un código de análisis de texto, el código se conecta a la base de datos del banco para obtener la información de las operaciones. Después de esto, el código realiza un procesamiento de texto y búsqueda de palabras, por medio de los cuales asignaremos una clasificación de acuerdo a un diccionario previamente establecido. Esto se encuentra en el código principal del repositorio titulado *cartera_digital_completo_scl.py*
 
-En segundo lugar, para la clasificación del **pipeline** se utiliza el Checklist digital de SCL disponible para su llenado [aquí](https://www.jotform.com/form/211395055225047). Esta información se utiliza en conjunto con la información de la base de datos del banco y se concatena en el código *pipeline - diccionario.py*.
+En segundo lugar, para la clasificación del **pipeline** se utiliza el Checklist digital de SCL disponible para su llenado [aquí](https://www.jotform.com/form/211395055225047). Esta información se combina con la información de la base de datos del banco en el *pipeline - diccionario.py*.
  
 La primera versión del diccionario utilizado para catalogar las operaciones, fue creado por el departamento de CSC del BID y luego actualizado por el front office del Sector Social. Entre los grupos se han determinado palabras clave para clasificar el tipo de operación al que se refiere el texto, es decir, clasificar en un texto tipo DIGITAL, NO DIGITAL
  
-El Dashboard resultante puede ser consultado [aquí](https://app.powerbi.com/groups/me/reports/292b5455-fb3f-4e0a-a719-babd34bf4c2f/ReportSection5810b828c73cd57c2b25?ctid=9dfb1a05-5f1d-449a-8960-62abcb479e7d)
+El Dashboard resultante puede ser consultado [aquí](https://app.powerbi.com/groups/c85d5888-24d0-4d69-bbfa-8e82d4e880f0/reports/4446a94f-aace-4def-9a4d-a9497b103488/ReportSection0ab4c65391af2642b8ae?ctid=9dfb1a05-5f1d-449a-8960-62abcb479e7d&experience=power-bi)
+
+Antes de empezar a trabajar en este proyecto es importante entender la categorización que hace el Sector Social en cuanto a las operaciones digitales del sector. En particular, se clasifican las operaciones digitales con base en sus componentes. Esto se explica detalladamente en el siguiente diagrama. 
+
+![Diagrama Cartera Digital](https://github.com/BID-DATA/diccionario_cartera_digital_scl/Inputs/operaciones_clasificacion.png)
 
 ## Estructura de trabajo
 Este repositorio tiene una estructura estandarizada para el flujo de trabajo y contribución. Esta se estructura de la siguiente manera. 
@@ -19,7 +24,7 @@ Este repositorio tiene una estructura estandarizada para el flujo de trabajo y c
   * Preliminares
   * Git Workflow
   * Documentación
-  * Actualización
+  * Proceso de actualización
 
 ### Preliminares
 
@@ -27,12 +32,11 @@ Antes de empezar a trabajar o contribuir en la elaboración de la cartera digita
 
 **1. Permisos necesarios**
 
-En primer lugar, para correr el código es necesario tener acceso a la base IBM Db2 del Banco [aquí](https://slpedw.iadb.org/console/#explore/table). Para tal efecto, es necesario levantar un ticket con el equipo de seguridad para tener los permisos requeridos.
+1. Primero, para ejecutar el código, necesitas tener instalado el ODBC driver de Data Marketplace. Deberás solicitar la instalación a ITE. Ticket [aquí](https://iadb.service-now.com/sp?id=sc_cat_item&sys_id=d7b9f6d70f8d3100d15605cce1050eb4&category=Technology%20services) Selecciona **Denodo ODBC Driver** en Software name.
 
-En segundo lugar, como se mencionó anteriormente, para la elaboración de la parte de **pipeline** de este repositorio se utiliza como insumo principal el input que otorgan los especialistas a través del **checklist digital**. El checklist se encuentra en Jotform en donde se almacena la información que llenan los especialistas. Cada nueva respuesta en el Checklist genera una nueva fila de información en el Excel de Pipeline. Adicionalmente, la información puede ser directamente consultada en la cuenta de Jotform. Únicamente la persona encargada de este repositorio debe tener acceso a esta cuenta. 
+2. Además, para la elaboración del pipeline, necesitas acceso a la cuenta de JotForm donde se almacena la información que llenan los especialistas en el checklist digital. Solo el administrador actual de este repositorio debe tener acceso a esta cuenta. Al asumir la administración de este repositorio, solicita la transferencia de la cuenta de JotForm. Asegúrate de cambiar las contraseñas para garantizar la seguridad de la información.
 
-Antes de volverse manager de este repositorio se debe solicitar el traspaso de la cuenta de Jotform, y una vez con el acceso otorgado se deben cambiar las contraseñas para asegurar la seguridad de la información. Es responsabilidad del manager anterior y actual hacer el traspaso de cuenta en tiempo y en forma, así como asegurar el acceso único 
-lo tenga el manager actual.
+3. Adicionalmente, se debe tener acceso a la carpeta de teams de cartera digital, ya que ahí se encuentran los distintos documentos necesarios para el funcionamiento del código (diccionarios/triage). Para 2 y 3 pedir permisos a Cristina Pombo.
 
 **2. Clonar el repositorio**
 
@@ -56,13 +60,69 @@ Debido a que podría darse el caso de un trabajo de forma paralela entre varios 
 2) Una vez terminado el proceso de modificación o ajuste de los scripts se debe realizar el pull request para realizar el merge. Se debe tener en cuenta que el merge siempre se debe solicitar para realiza en la Branch de Development. 
 3) Una vez se realiza la solitud de merge, se revisa y verifica que no existan errores en el nuevo pull antes de aceptar el merge a la branch principal. 
 
-### Actualización ### 
+### Proceso de actualización
 
-Debido a que las operaciones en cartera en ejecución y en pipeline cambian con relativa frecuencia, el dashboard debe de ser actualizado por lo menos dos veces al mes. Esto implica lo siguiente:
-1. Correr el código de cartera en ejecución (*cartera_digital_completo_scl*). 
-2. Correr el código de pipeline, que junta la información contenida en el checklist y la información de la base de datos del Banco (*pipeline - diccionario.py*). 
-3. Actualizar los PowerBi correspondientes con la nueva información. 
-4. Revisar el dashborad resultante. 
-5. Publicar el archivo resultante y asegurarse que este fue publicado correctamente.
+Las operaciones de la cartera en ejecución y pipeline sufren cambios con frecuencia, lo que requiere que el dashboard se actualice al menos una vez cada trimestre. Para mantener el dashboard al día, deberás seguir los siguientes pasos. Estos también se encuentran detallados [aquí](https://idbg.sharepoint.com/:w:/r/sites/CarteraDigitalSCL/Shared%20Documents/General/Checklist/Flujo%20Checklist.docx?d=w4fa4f253a39b4b7789d73b9419974099&csf=1&web=1&e=L4XMfF)
+
+1. **Actualizar la cartera:** 
+    - **Input:** Tener instalado el ODBC driver de Data Marketplace. (Ticket con ITE)
+    - **Proceso:** Ejecuta el código `cartera_digital_completo_scl.py` una vez por trimestre.
+    - **Output:** `output.xlsx`, un archivo que contiene las operaciones de SCL clasificadas como digitales y no digitales.
+
+2. **Actualizar el pipeline:** 
+
+Este proceso tiene dos partes 1. código 2. seguimiento de operaciones digitales. Así que se dividirán los pasos en a. y b.
+   
+  - **Input:** 
+    
+a. Tener instalado el ODBC driver de Data Marketplace. (Ticket con ITE) y el archivo Excel que almacena los resultados del checklist digital (triage digital) (Cartera Digital SCL>General>documents>inputs>`Triage_digital.xlsx`). 
+**Nota** El archivo de triage se actualiza automáticamente por medio del flujo de power automate, no es necesario actualizarlo. Flujo de power automate de checklist [Aquí]()
+    
+b. Flujo de power automate para dar seguimiento a operaciones digitales. [Aquí](https://make.powerautomate.com/environments/Default-9dfb1a05-5f1d-449a-8960-62abcb479e7d/flows/6aa46342-35f9-49b9-8089-c26fd414040d/details)
+    
+  - **Proceso:** 
+    
+a. Ejecuta el código `pipeline - diccionario.py` una vez al mes.
+
+b. Se actualiza manualmente el archivo `output-pipe-tabla.xlsx` con el output del siguiente punto 1 (asegurarse que todo el rango quede dentro de la tabla porque eso es lo que lee el power automate). 
+    
+  - **Output:** 
+    
+a. `output-pipe.xlsx`, un archivo que contiene las operaciones en pipeline de SCL clasificadas como digitales y no digitales.
+    
+b. `output-pipe-tabla.xlsx` archivo que sirve de input para el flujo de power automate que genera correo a los usuarios 30 días antes de la fecha de su POD. 
+    
+- **Nota:** Para **1** y **2** debes de asegurarte de cambiar las contraseñas necesarias a las tuyas (las del BID)
+    en `cartera_digital_completo_scl.py` y `pipeline - diccionario.py`.
+- **Nota 2:** Las operaciones en pipelina eventualmente pasaran a la cartera en ejecución. Para estas operaciones, el paso 1 en el que se clasifica la cartera en ejecución utilizando el diccionario ya no será necesario porque los especialistas ya habrán determinado si la operación es digital o no. De este modo, la clasificación realizada por los especialistas se considera más confiable y es la que se adoptará como resultado final.
+
+3. **Ejecutar el código de KPI en R:** 
+  - **Input:** 
+    
+  a. El archivo `DIV - revision operaciones.xlsx` para dividir las operaciones de SPH entre salud y protección social, 
+      
+  b. Los archivos `output.xlsx` y `output-pipe.xlsx` generados en los pasos anteriores (1 y 2).
+      
+  c. El archivo `KPI_division_seguimiento.xlsx` dentro de la carpeta de General>Seguimiento es donde las divisiones harán una actualización de sus KPIs.
+      
+  d. Esa información debe de ser trasladada (manualmente) al archivo de Input `KPI_division.xlsx` que se encuentra dentro de este repositorio
+     
+  - **Nota:** Antes de ejecutar este script, debes verificar si las divisiones ya han actualizado sus KPIs.
+  - **Proceso:** Ejecuta el script `tabla_kpis.R` una vez por trimestre.
+  - **Output:** `KPI.xlsx` Tabla final de KPIs. 
+    
+    Todos los archivos de Output mencionados en los pasos 1-4 se encuentran en la carpeta de Teams en la siguiente ruta (Cartera Digital SCL>General>cartera digital>Dashboard) 
+    
+    
+4. **Actualizar PowerBi:** 
+  - **Input:** Toda la información generada en los pasos anteriores.
+  - **Proceso:** Abre el archivo `CarteraDigital_Report.pbix` en el folder General/cartera digital/dashboard y actualiza.      - **Output:** Dashboard actualizado en PowerBi.
+
+5. **Revisar el dashboard resultante:** 
+  - **Proceso:** Verifica que la información se ha actualizado y visualizado correctamente.
+
+6. **Publicar el dashboard en PowerBi:** 
+  - **Proceso:** Publica el dashboard actualizado. Dentro del archivo de powerbi le das publicar en SCL - Social Digital. Esto publicará el dasboard en nuestro workspace en línea y estará disponible para ser visto por todas las personas en el banco.
+  - **Output:** Dashboard publicado y revisado.
 
 - Actualmente la persona encargada de este repositorio es María Reyes Retana (mariarey@iadb.org)
