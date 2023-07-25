@@ -62,7 +62,7 @@ Debido a que podría darse el caso de un trabajo de forma paralela entre varios 
 
 ### Proceso de actualización
 
-Las operaciones de la cartera en ejecución y pipeline sufren cambios con frecuencia, lo que requiere que el dashboard se actualice al menos una vez cada trimestre. Para mantener el dashboard al día, deberás seguir los siguientes pasos:
+Las operaciones de la cartera en ejecución y pipeline sufren cambios con frecuencia, lo que requiere que el dashboard se actualice al menos una vez cada trimestre. Para mantener el dashboard al día, deberás seguir los siguientes pasos. Estos también se encuentran detallados [aquí](https://idbg.sharepoint.com/:w:/r/sites/CarteraDigitalSCL/Shared%20Documents/General/Checklist/Flujo%20Checklist.docx?d=w4fa4f253a39b4b7789d73b9419974099&csf=1&web=1&e=L4XMfF)
 
 1. **Actualizar la cartera:** 
     - **Input:** Tener instalado el ODBC driver de Data Marketplace. (Ticket con ITE)
