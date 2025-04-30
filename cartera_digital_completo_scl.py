@@ -6,7 +6,8 @@ Created on Mon Oct 19 10:42:59 2020
 
 Updated on Thu Jun 10 2021, deyanaram@iadb.org
 Updated on Mon Nov 01, 2021, mariarey@iadb.org
-Last updated on Mon July 24, 2023, mariarey@iadb.org
+Updated on Mon July 24, 2023, mariarey@iadb.org
+Updated on Mon Nov 06, 2023, carolinari@iadb.org
 """
 
 
@@ -44,6 +45,7 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 import unicodedata
+import nltk
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 from itertools import chain
@@ -54,7 +56,7 @@ from textblob import TextBlob
 import os
 import time
 
-import ibm_db
+#import ibm_db
 import sys
 import pyodbc
 
@@ -67,8 +69,8 @@ conn = pyodbc.connect(
     "SERVER=datamarketplace;"
     "DATABASE=ledw;"
     # your IADB credentials
-    "UID=youruser;"
-    "PWD=yourpassword;"
+    "UID=;"
+    "PWD=!;"
     "CHARSET=UTF-8;"
 )
 
@@ -175,19 +177,20 @@ Resultatos = Resultados[
 # Resultados.shape #Visualizando resultado
 # Resultados.drop_duplicates(inplace=True)
 
-ibm_db.close  # Cerrando la conexión
+# ibm_db.close  # Cerrando la conexión
 
 ################# Lectura del archivo diccionario #############################
 
 # Cambiar path al local dónde se tiene el folder de cartera digital
 
-path = "C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/General/cartera digital/Dashboard/"
+path = "C:/Users/CAROLINARI/Inter-American Development Bank Group/Cartera Digital SCL - Documents/General/H. cartera digital/Dashboard/"
 
 ####Se forma un solo diccionario
 Diccionario = pd.ExcelFile(path + "/Inputs/01_Diccionario_token_digital.xlsx")
 Diccionario = Diccionario.parse("Sheet1")  ############Lectura de data
 Diccionario.head()  ####ver los primeros registros de la data
 Diccionario.columns.values  ###Los nombres de las columnas
+
 Diccionario.shape  #####dimensiones de la data
 
 Diccionario_En = Diccionario[["TIPO", "INGLES", "TOKENS"]]
@@ -286,7 +289,7 @@ Base = Metadatos[
 
 
 #########################Generacion de stopwords ##############################################
-
+nltk.download('stopwords')
 listStopwordsEn = stopwords.words("english")
 listStopwordsEs = stopwords.words("spanish")
 listStopwordsFr = stopwords.words("french")
@@ -1284,7 +1287,7 @@ Bas = Bas.merge(Final, how="outer")
 
 ###### Incluir transformación digital de checklist ######
 
-path_cl = "C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/General/documents/Inputs"
+path_cl = "C:/Users/CAROLINARI/Inter-American Development Bank Group/Cartera Digital SCL - Documents/General/O. Otros/documents/Inputs"
 checklist = pd.read_excel(
     path_cl + "/Triage_digital.xlsx", sheet_name="Sheet1"
 )  # leer checklist completa
@@ -1386,17 +1389,16 @@ Bas["OUTPUT_DIG_COST"] = Bas["OUTPUT_COST"] / Bas["TOTAL_COST"]
 # leer el archivo que contiene la revisión manual de las divisiones
 
 # path manual donde se tiene el repo de cartera
-path_revision = "C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/Documents/GitHub/diccionario_cartera_digital_scl/Inputs/"
-resultado_manual = pd.read_excel(
-    path_revision + "revision_dig_divisiones.xlsx", sheet_name="Sheet1"
-)  # leer revisión manual
-Bas = Bas.merge(resultado_manual, on=["OPERATION_NUMBER", "DIVISION"], how="left")
-Bas["DUMMY_DIGITAL"] = np.where(
-    Bas["RESULTADO_DIV"] == 0,
-    0,
-    np.where(Bas["RESULTADO_DIV"] == 1, 1, Bas["DUMMY_DIGITAL"]),
-)
-Bas.drop(columns=["RESULTADO_DIV"], inplace=True)
+# path_revision = "C:/Users/CAROLINARI/OneDrive - Inter-American Development Bank Group/Documents/GitHub/diccionario_cartera_digital_scl"
+#resultado_manual = pd.read_excel(
+#    path_revision + "revision_dig_divisiones.xlsx", sheet_name="Sheet1"
+#)  # leer revisión manual
+# Bas = Bas.merge(resultado_manual, on=["OPERATION_NUMBER", "DIVISION"], how="left")
+# Bas["DUMMY_DIGITAL"] = np.where(
+#   Bas["RESULTADO_DIV"] == 0, #   0,
+#    np.where(Bas["RESULTADO_DIV"] == 1, 1, Bas["DUMMY_DIGITAL"]),
+# )
+# Bas.drop(columns=["RESULTADO_DIV"], inplace=True)
 
 #######################################################################################################
 # NUBE DE PALABRAS

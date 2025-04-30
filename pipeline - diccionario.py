@@ -3,7 +3,7 @@
 Created on MON 12/06/21
 
 @author: MARIAREY
-
+Updated on Mon Nov 06, 2023, carolinari@iadb.org
 """
 "con este script se llaman las operaciones del pipeline para el triage digital y se corre el diccionario para clasificarla como digital o no\
     también se lee la información reecolectada en el excel del checklist para determinar si una operación fue catalogada como digital por los especialistas.\
@@ -23,69 +23,118 @@ from itertools import chain
 from datetime import datetime, date, time, timedelta
 import re, string
 from textblob import TextBlob
-
+import pyodbc
 import os
 import time
 
-import ibm_db
+#import ibm_db
 
 
 ##################### Extracción de datos operaciones #########################
 
-conn = ibm_db.connect("DATABASE=bludb;HOSTNAME=slpedw.iadb.org;PORT=50001;security=ssl;UID=user;PWD=password;", "", "") #Abriendo conexión con repositorio de datos DB2
+conn = pyodbc.connect(
+    "DRIVER=DenodoODBC Unicode(x64);"
+    "SERVER=datamarketplace;"
+    "DATABASE=ledw;"
+    # your IADB credentials
+    "UID=;"
+    "PWD=!;"
+    "CHARSET=UTF-8;"
+)
+
+
+cursor = conn.cursor()
 
 sql = "SELECT DISTINCT C.OPER_NUM as OPERATION_NUMBER, C.PIPE_YR, C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION,\
 	C.PIPE_YR, C.TEAM_LEADER_NM, C.TEAM_LEADER_PCM, C.REGN AS REGION, C.CNTRY_BENFIT AS COUNTRY, C.STS_CD AS STATUS, C.STG_ENGL_NM AS STAGE, C.STS_ENGL_NM AS TAXONOMY, C.APPRVL_DT AS APPROVAL_DATE, C.APPRVL_DT_YR as APPROVAL_YEAR,\
     C.ORIG_APPRVD_USEQ_AMNT AS APPROVAL_AMOUNT, C.CURNT_DISB_EXPR_DT as CURRENT_EXPIRATION_DATE, C.RELTN_NUM AS RELATED_OPER, C.OPER_TYP_CD AS OPERATION_TYPE, A.OBJTV_ENGL as OBJECTIVE_EN,\
     A.OBJTV_SPANISH as OBJECTIVE_ES, B.CMPNT_STMNT as COMPONENT_NAME, B.OUTPUT_DEFNTN as OUTPUT_NAME, C.FACILITY_TYP_ENGL_NM AS OUTPUT_DESCRIPTION \
-FROM ODS.SPD_ODS_HOPERMAS C \
-JOIN ( select OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ODS.SPD_ODS_HOPERMAS GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT \
- 	JOIN ODS.OPER_ODS_OPER A ON C.OPER_NUM = A.OPER_NUM \
- 	JOIN ODS.OPER_ODS_OUTPUT_IND B ON C.OPER_NUM = B.OPER_NUM \
-WHERE (DATE(C.APPRVL_DT) > DATE(NOW()) OR C.APPRVL_DT is null) AND C.PREP_RESP_DEPT_CD='SCL' AND C.OPER_CAT_CD='A' AND C.PIPE_YR>2020 AND (C.OPER_TYP_CD='LON' OR C.OPER_TYP_CD='GRF' OR C.OPER_TYP_CD = 'TCP')" #SQL query de datos deseados pipeline A
+FROM ledw.spd_ods_hopermas C \
+JOIN ( select OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ledw.spd_ods_hopermas \ GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT \
+ 	JOIN ledw.oper_ods_oper A ON C.OPER_NUM = A.OPER_NUM \
+ 	JOIN ledw.oper_ods_output_ind B ON C.OPER_NUM = B.OPER_NUM \
+WHERE C.PREP_RESP_DEPT_CD='SCL' AND C.OPER_CAT_CD='A' AND C.PIPE_YR>2020 AND (C.OPER_TYP_CD='LON' OR C.OPER_TYP_CD='GRF' OR C.OPER_TYP_CD = 'TCP')" #SQL query de datos deseados pipeline A
+#(DATE(C.APPRVL_DT) > DATE(NOW()) OR C.APPRVL_DT is null) AND 
+cursor.execute(sql)
 
-stmt = ibm_db.exec_immediate(conn, sql) #Querying data
+# Fetching the data as binary
+rows = cursor.fetchall()
+
+# Decoding the binary data to strings using UTF-8 encoding
+decoded_rows = []
+for row in rows:
+    decoded_row = []
+    for value in row:
+        if isinstance(value, bytes):
+            decoded_row.append(value.decode("utf-8", errors="replace"))
+        else:
+            decoded_row.append(value)
+    decoded_rows.append(decoded_row)
+
+# Defining the column names
+column_names = [column[0] for column in cursor.description]
+
+# Creating the DataFrame
+Metadatos = pd.DataFrame(decoded_rows, columns=column_names)
+Metadatos.columns = map(str.upper, Metadatos.columns)
+
+# Closing the connection #Querying data
 
 #Creando base de datos con query
-cols = ['OPERATION_NUMBER', 'OPERATION_NAME', 'PIPE_YR', 'OPERATION_TYPE_NAME', 'OPERATION_MODALITY', 'DEPARTMENT', 'DIVISION', 'TEAM_LEADER_NM',  'REGION', 'COUNTRY', 'STATUS', 'STAGE', 'TAXONOMY', 'APPROVAL_DATE', 'APPROVAL_YEAR', 'APPROVAL_AMOUNT', 'CURRENT_EXPIRATION_DATE', 'RELATED_OPER', 'OPERATION_TYPE', 'OBJECTIVE_EN', 'OBJECTIVE_ES', 'COMPONENT_NAME', 'OUTPUT_NAME', 'OUTPUT_DESCRIPTION']
-Metadatos = pd.DataFrame(columns=cols)
-result = ibm_db.fetch_both(stmt)
-while(result):
-    Metadatos = Metadatos.append(result, ignore_index=True)
-    result = ibm_db.fetch_both(stmt)
+#cols = ['OPERATION_NUMBER', 'OPERATION_NAME', 'PIPE_YR', 'OPERATION_TYPE_NAME', 'OPERATION_MODALITY', 'DEPARTMENT', 'DIVISION', 'TEAM_LEADER_NM',  'REGION', 'COUNTRY', 'STATUS', 'STAGE', 'TAXONOMY', 'APPROVAL_DATE', 'APPROVAL_YEAR', 'APPROVAL_AMOUNT', 'CURRENT_EXPIRATION_DATE', 'RELATED_OPER', 'OPERATION_TYPE', 'OBJECTIVE_EN', 'OBJECTIVE_ES', 'COMPONENT_NAME', 'OUTPUT_NAME', 'OUTPUT_DESCRIPTION']
+#Metadatos = pd.DataFrame(columns=cols)
 
-Metadatos = Metadatos.iloc[:, 0:24]
+
+#Metadatos = Metadatos.iloc[:, 0:24]
 Metadatos.shape #Visualizando resultado 
 
-# solo leer pipeline 
-sql_pipe = "SELECT DISTINCT C.OPER_NUM as OPERATION_NUMBER, C.PIPE_YR, C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION,\
+
+#Creando base de datos con query pipe
+sql = "SELECT DISTINCT C.OPER_NUM as OPERATION_NUMBER, C.PIPE_YR, C.OPER_ENGL_NM as OPERATION_NAME, C.OPERTYP_ENGL_NM AS OPERATION_TYPE_NAME, C.MODALITY_CD AS OPERATION_MODALITY, C.PREP_RESP_DEPT_CD AS DEPARTMENT, C.PREP_RESP_DIV_CD AS DIVISION,\
 	C.PIPE_YR, C.TEAM_LEADER_NM, C.TEAM_LEADER_PCM, C.REGN AS REGION, C.CNTRY_BENFIT AS COUNTRY, C.STS_CD AS STATUS, C.STG_ENGL_NM AS STAGE, C.STS_ENGL_NM AS TAXONOMY, C.APPRVL_DT AS APPROVAL_DATE, C.APPRVL_DT_YR as APPROVAL_YEAR,\
     C.ORIG_APPRVD_USEQ_AMNT AS APPROVAL_AMOUNT, C.CURNT_DISB_EXPR_DT as CURRENT_EXPIRATION_DATE, C.RELTN_NUM AS RELATED_OPER, C.OPER_TYP_CD AS OPERATION_TYPE, A.OBJTV_ENGL as OBJECTIVE_EN,\
     A.OBJTV_SPANISH as OBJECTIVE_ES, C.FACILITY_TYP_ENGL_NM AS OUTPUT_DESCRIPTION \
-FROM ODS.SPD_ODS_HOPERMAS C \
-JOIN ( select OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ODS.SPD_ODS_HOPERMAS GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT \
- 	JOIN ODS.OPER_ODS_OPER A ON C.OPER_NUM = A.OPER_NUM \
-WHERE (DATE(C.APPRVL_DT) > DATE(NOW()) OR C.APPRVL_DT is null) AND C.PREP_RESP_DEPT_CD='SCL' AND C.OPER_CAT_CD='A' AND C.PIPE_YR>2020 AND (C.OPER_TYP_CD='LON' OR C.OPER_TYP_CD='GRF' OR C.OPER_TYP_CD = 'TCP')" #SQL query de datos deseados pipeline A"
-    
-stmt_pipe = ibm_db.exec_immediate(conn, sql_pipe) #Querying data
+FROM ledw.spd_ods_hopermas C \
+JOIN ( select OPER_NUM, MAX(DW_CRTE_TS) AS MAX_DT from ledw.spd_ods_hopermas \ GROUP BY OPER_NUM) t ON C.OPER_NUM= t.OPER_NUM and C.DW_CRTE_TS = t.MAX_DT \
+ 	JOIN ledw.oper_ods_oper A ON C.OPER_NUM = A.OPER_NUM \
+WHERE C.PREP_RESP_DEPT_CD='SCL' AND C.OPER_CAT_CD='A' AND C.PIPE_YR>2020 AND (C.OPER_TYP_CD='LON' OR C.OPER_TYP_CD='GRF' OR C.OPER_TYP_CD = 'TCP')" #SQL query de datos deseados pipeline A
+#(DATE(C.APPRVL_DT) > DATE(NOW()) OR C.APPRVL_DT is null) AND 
+cursor.execute(sql)
 
-#Creando base de datos con query pipe
+# Fetching the data as binary
+rows = cursor.fetchall()
+
+# Decoding the binary data to strings using UTF-8 encoding
+decoded_rows = []
+for row in rows:
+    decoded_row = []
+    for value in row:
+        if isinstance(value, bytes):
+            decoded_row.append(value.decode("utf-8", errors="replace"))
+        else:
+            decoded_row.append(value)
+    decoded_rows.append(decoded_row)
+
+column_names = [column[0] for column in cursor.description]
+
+# Creating the DataFrame
+Metadatos_pipe  = pd.DataFrame(decoded_rows, columns=column_names)
+Metadatos_pipe.columns = map(str.upper, Metadatos_pipe.columns)
+
 cols_pipe = ['OPERATION_NUMBER', 'OPERATION_NAME', 'PIPE_YR', 'OPERATION_TYPE_NAME', 'OPERATION_MODALITY', 'DEPARTMENT', 'DIVISION', 'TEAM_LEADER_NM',  'REGION', 'COUNTRY', 'STATUS', 'STAGE', 'TAXONOMY', 'APPROVAL_DATE', 'APPROVAL_YEAR', 'APPROVAL_AMOUNT', 'CURRENT_EXPIRATION_DATE', 'RELATED_OPER', 'OPERATION_TYPE', 'OBJECTIVE_EN', 'OBJECTIVE_ES', 'COMPONENT_NAME', 'OUTPUT_NAME', 'OUTPUT_DESCRIPTION']
-Metadatos_pipe = pd.DataFrame(columns=cols_pipe)
-result_pipe = ibm_db.fetch_both(stmt_pipe)
-while(result_pipe):
-    Metadatos_pipe = Metadatos_pipe.append(result_pipe, ignore_index=True)
-    result_pipe = ibm_db.fetch_both(stmt_pipe)
+#Metadatos_pipe = pd.DataFrame(columns=cols_pipe)
 
-Metadatos_pipe = Metadatos_pipe.iloc[:, 0:24]
-Metadatos_pipe.shape #Visualizando resultado 
 
-ibm_db.close #Cerrando la conexión
+
+#Metadatos_pipe = Metadatos_pipe.iloc[:, 0:24]
+#Metadatos_pipe.shape #Visualizando resultado 
+
+
 
 
 ################# Lectura del archivo diccionario #############################
 
-path = 'C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/Documents/Data Governance - SCL/Cartera digital'
+path = 'C:/Users/CAROLINARI/Inter-American Development Bank Group/Cartera Digital SCL - Documents/General/H. cartera digital/Dashboard/'
 
 ####Se forma un solo diccionario
 Diccionario=pd.ExcelFile(path+'/Inputs/01_Diccionario_token_digital.xlsx')
@@ -148,7 +197,6 @@ diccionario_bigrama = pd.concat([diccionario_bigrama_Es,diccionario_bigrama_En,d
 
 
 ######################Subase donde se encuentra las columnas las cuales seran procesadas #############
-
 Base = Metadatos[{'OPERATION_NUMBER','OPERATION_NAME',
                   'OBJECTIVE_ES','OBJECTIVE_EN','COMPONENT_NAME','OUTPUT_NAME','OUTPUT_DESCRIPTION'}]
 
@@ -885,9 +933,9 @@ Base_pipe = Base_pipe.merge(oper_proc, on = 'OPERATION_NUMBER', how = 'left')
 Base_pipe['DUMMY_DIGITAL'] = Base_pipe['DUMMY_DIGITAL'].fillna("No se ha llenado checklist")
 
 # leer información de checklist y pegar
-
-path_cl = 'C:/Users/MARIAREY/OneDrive - Inter-American Development Bank Group/General/documents' 
-checklist = pd.read_excel(path_cl+"/Triage_digital.xlsx", sheet_name = "Sheet1")
+#C:/Users/CAROLINARI/Inter-American Development Bank Group/Cartera Digital SCL - Documents/General/O. Otros/documents/Inputs/Triage_digital.xlsx
+path_cl = 'C:/Users/CAROLINARI/Inter-American Development Bank Group/Cartera Digital SCL - Documents/General/O. Otros/documents' 
+checklist = pd.read_excel(path_cl+"/Inputs/Triage_digital.xlsx", sheet_name = "Sheet1")
 
 checklist["OPERATION_NUMBER"]=checklist["ID"]
 checklist['INFO']=checklist['¿Se prevé comprar algún tipo de tecnología (tablets, servidores) o pagar por algún tipo de servicio digital (conexión a internet, licenciamientos, licencias de servicios como tableau?']
